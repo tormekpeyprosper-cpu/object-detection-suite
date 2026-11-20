@@ -160,6 +160,7 @@ The system is deployed live on Vercel:
 - **Production URL:** [https://object-detection-suite.vercel.app](https://object-detection-suite.vercel.app)
 - **API Health Endpoint:** [https://object-detection-suite.vercel.app/api/health](https://object-detection-suite.vercel.app/api/health)
 - **Vision Detection Endpoint:** `https://object-detection-suite.vercel.app/api/detect`
+- **GitHub Repository:** [https://github.com/tormekpeyprosper-cpu/object-detection-suite](https://github.com/tormekpeyprosper-cpu/object-detection-suite)
 
 ### Re-deploying via Vercel CLI
 ```bash

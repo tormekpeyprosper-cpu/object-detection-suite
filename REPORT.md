@@ -202,7 +202,7 @@ The following dedicated project repositories, live deployments, and visual evide
   [https://object-detection-suite.vercel.app](https://object-detection-suite.vercel.app) *(Live Production Deployment on Vercel)*
 
 * **Link to GitHub:**  
-  [https://github.com/your-username/object-detection-suite](https://github.com/your-username/object-detection-suite) *(Replace with your GitHub repository URL)*
+  [https://github.com/tormekpeyprosper-cpu/object-detection-suite](https://github.com/tormekpeyprosper-cpu/object-detection-suite) *(Public GitHub Repository)*
 
 * **Link to Pictures (Dataset & Evaluation Visuals):**  
   [https://drive.google.com/drive/folders/your-dataset-link](https://drive.google.com/drive/folders/your-dataset-link) *(Replace with your Google Drive / Cloud Storage folder)*
