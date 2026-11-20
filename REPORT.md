@@ -284,3 +284,12 @@ mixup: 0.0
 - Disk storage footprint for image operations: `0.00 MB`.
 - Supabase storage buckets utilized for photos: `0` (Zero photos stored).
 - RAM deallocation verified via explicit garbage collection triggers after every request lifecycle.
+
+### 5.5 Production Smoke Test & Verification Telemetry
+Automated end-to-end verification executed against the live Vercel deployment:
+- **Target URL:** `https://object-detection-suite.vercel.app`
+- **Health Verification:** `GET /api/health` returned HTTP 200 with status `healthy`, Supabase auth confirmed, and zero-storage policy enforced.
+- **Authentication Gate:** `POST /api/detect` without Bearer token returned HTTP 401 (`Missing Authorization header`).
+- **Authenticated Inference:** `POST /api/detect` with Bearer token returned HTTP 200 with 3 localized bounding boxes (`target_item`, `secondary_object`, `context_marker`), 16.79 ms server inference latency, and immediate in-memory byte deallocation.
+- **Mobile Alignment:** Confirmed `mobile-app/config.js` routes to `https://object-detection-suite.vercel.app`.
+- **Disk Leak Audit:** Confirmed 0 image files leaked across the entire repository. All 5/5 verification tests passed cleanly.
