@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VisionDetect AI - Supabase Authenticated Vision Pipeline</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+  <!-- =========================================================================
+       1. Authentication Screen (Supabase Auth - Option A: Dark Glassmorphism)
+       ========================================================================= -->
+  <div class="auth-wrapper" id="authSection">
+    <div class="auth-ambient-orb orb-1"></div>
+    <div class="auth-ambient-orb orb-2"></div>
+
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-brand-badge">V</div>
+        <h2>VisionDetect AI</h2>
+        <p>Zero-Storage In-Memory Vision Inference</p>
+      </div>
+
+      <!-- Sign In vs Create Account Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" id="tabSignIn" type="button">Sign In</button>
+        <button class="auth-tab-btn" id="tabSignUp" type="button">Create Account</button>
+      </div>
+
+      <!-- Feedback Alert Banner -->
+      <div class="auth-alert" id="authAlert"></div>
+
+      <!-- Authentication Form -->
+      <form id="authForm">
+        <div class="auth-field">
+          <label for="authEmail">Email Address</label>
+          <div class="auth-input-wrapper">
+            <input 
+              type="email" 
+              id="authEmail" 
+              class="auth-input" 
+              placeholder="name@example.com" 
+              required 
+              autocomplete="email"
+            >
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label for="authPassword">Password</label>
+          <div class="auth-input-wrapper">
+            <input 
+              type="password" 
+              id="authPassword" 
+              class="auth-input" 
+              placeholder="••••••••" 
+              required 
+              autocomplete="current-password"
+            >
+            <button type="button" class="auth-toggle-pwd" id="btnTogglePwd" title="Show / Hide Password">👁️</button>
+          </div>
+        </div>
+
+        <button type="submit" class="auth-submit-btn" id="btnAuthSubmit">
+          <span id="authSubmitText">Sign In</span>
+          <span class="spinner-sm" id="authSpinner" style="display:none;"></span>
+        </button>
+      </form>
+
+      <div class="auth-privacy-note">
+        🔒 <strong>Strict Zero-Storage Privacy Policy:</strong><br>
+        Frames are analyzed purely in volatile memory. Images are never written to disk, PostgreSQL, or Supabase Storage.
+      </div>
+    </div>
+  </div>
+
+
+  <!-- =========================================================================
+       2. Gated Detection Studio (Visible only to authenticated users)
+       ========================================================================= -->
+  <div id="appSection" style="display: none; flex-direction: column; min-height: 100vh;">
+    
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">V</div>
+        <h1>VisionDetect AI <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:normal;">(Authenticated Studio)</span></h1>
+      </div>
+      <div class="header-status">
+        <div class="user-badge" id="userBadge">
+          <span>👤</span>
+          <span id="userEmailText">user@domain.com</span>
+        </div>
+        <div class="status-badge" id="backendStatus">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusText">Checking Backend...</span>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="btnSignOut" type="button">Sign Out</button>
+      </div>
+    </header>
+
+    <!-- Main Studio Grid -->
+    <main class="main-container">
+      
+      <!-- Left Column: Controls & Input Selection -->
+      <aside class="sidebar">
+        
+        <!-- Input Source Selector Card -->
+        <section class="card">
+          <h2>Input Source</h2>
+          
+          <div class="tabs">
+            <button class="tab-btn active" id="tabUpload" type="button">Upload File</button>
+            <button class="tab-btn" id="tabWebcam" type="button">Live Webcam</button>
+          </div>
+
+          <!-- Mode 1: File Dropzone -->
+          <div id="uploadPanel">
+            <div class="dropzone" id="dropzone">
+              <div class="dropzone-icon">&#128247;</div>
+              <p>Drag & drop image here, or <span>Browse</span></p>
+              <p style="font-size:0.75rem; margin-top:4px;">Supports JPG, PNG, WEBP</p>
+              <input type="file" id="fileInput" accept="image/*">
+            </div>
+          </div>
+
+          <!-- Mode 2: Webcam Panel -->
+          <div class="webcam-container" id="webcamPanel">
+            <div class="video-wrapper">
+              <video id="webcamVideo" autoplay playsinline muted></video>
+            </div>
+            <div class="webcam-controls">
+              <button class="btn btn-secondary" id="btnToggleCam" type="button">Start Camera</button>
+              <button class="btn btn-secondary" id="btnSwitchCam" type="button" title="Switch between front and back camera">Flip Camera</button>
+            </div>
+            <button class="btn btn-primary" id="btnCaptureFrame" type="button" disabled>Capture Frame & Detect</button>
+          </div>
+
+        </section>
+
+        <!-- Hyperparameters & Settings Card -->
+        <section class="card">
+          <h2>Inference Settings</h2>
+          
+          <div class="form-group">
+            <label for="apiUrlInput">API Endpoint</label>
+            <input type="text" id="apiUrlInput" value="http://localhost:8000/api/detect" placeholder="http://localhost:8000/api/detect">
+          </div>
+
+          <div class="form-group">
+            <label for="confSlider">
+              Confidence Threshold
+              <span id="confValue" style="color:var(--accent-cyan);">0.25</span>
+            </label>
+            <input type="range" id="confSlider" min="0.05" max="0.95" step="0.05" value="0.25">
+          </div>
+
+          <div class="form-group">
+            <label for="iouSlider">
+              IoU Threshold (NMS)
+              <span id="iouValue" style="color:var(--accent-cyan);">0.50</span>
+            </label>
+            <input type="range" id="iouSlider" min="0.10" max="0.90" step="0.05" value="0.50">
+          </div>
+
+          <div class="form-group">
+            <label for="imgszSelect">Target Inference Size</label>
+            <select id="imgszSelect">
+              <option value="640" selected>640 x 640 (Standard)</option>
+              <option value="1280">1280 x 1280 (High-Res)</option>
+            </select>
+          </div>
+
+          <div class="action-row">
+            <button class="btn btn-primary" id="btnDetect" type="button" disabled>Detect Objects</button>
+            <button class="btn btn-danger" id="btnClear" type="button">Clear / Reset</button>
+          </div>
+        </section>
+
+        <!-- Privacy & Architecture Guarantee -->
+        <div class="privacy-banner">
+          <strong>STRICT NO-STORAGE POLICY</strong>
+          Uploaded frames are processed entirely in volatile memory. Zero images are saved to local disks, cloud buckets, or Supabase Storage. Memory is purged immediately after inference.
+        </div>
+
+      </aside>
+
+      <!-- Right Column: Interactive Canvas & Detections List -->
+      <div class="preview-area">
+        
+        <!-- Canvas Display Viewport -->
+        <section class="viewport-container" id="viewportContainer">
+          
+          <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <p id="loadingMsg" style="font-size:0.9rem; color:var(--text-primary); font-weight:600;">Running Vision Inference...</p>
+          </div>
+
+          <div class="canvas-wrapper" id="canvasWrapper" style="display:none;">
+            <canvas id="previewCanvas"></canvas>
+          </div>
+
+          <div class="placeholder-view" id="placeholderView">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <p>No image loaded yet.</p>
+            <p style="font-size:0.8rem; margin-top:4px;">Upload an image or capture a webcam frame to begin inference.</p>
+          </div>
+
+        </section>
+
+        <!-- Results & Metrics Card -->
+        <section class="results-card" id="resultsCard" style="display:none;">
+          <h2>Inference Results</h2>
+          
+          <div class="metrics-bar">
+            <div class="metric-pill">
+              <div class="metric-label">Backend Mode</div>
+              <div class="metric-value" id="resMode" style="color:var(--accent-cyan);">-</div>
+            </div>
+            <div class="metric-pill">
+              <div class="metric-label">Latency</div>
+              <div class="metric-value" id="resLatency">-</div>
+            </div>
+            <div class="metric-pill">
+              <div class="metric-label">Detections</div>
+              <div class="metric-value" id="resCount">-</div>
+            </div>
+            <div class="metric-pill">
+              <div class="metric-label">Resolution</div>
+              <div class="metric-value" id="resDims">-</div>
+            </div>
+          </div>
+
+          <table class="detections-table">
+            <thead>
+              <tr>
+                <th>Class Label</th>
+                <th>Confidence</th>
+                <th>Bounding Coordinates (x1, y1, x2, y2)</th>
+              </tr>
+            </thead>
+            <tbody id="detectionsTableBody">
+              <!-- Dynamic rows will be inserted here -->
+            </tbody>
+          </table>
+        </section>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
