@@ -18,7 +18,8 @@ object-detection-suite/
 │   ├── .env                  # Live environment variables (Ultralytics & Supabase)
 │   └── .env.example          # Environment variable template
 ├── docs/                     # Documentation and Training Artifacts
-│   ├── Project_Report_Object_Detection_Suite.docx # Complete formal evaluation report
+│   ├── Project_Report_Object_Detection_Suite.docx # Complete formal evaluation report (Times New Roman, 16 pt, IEEE)
+│   ├── Project_Explanation_and_Defense_Guide.docx # Plain-English viva & presentation guide (Times New Roman, 16 pt, IEEE)
 │   └── graphs/               # Generated evaluation plots, weights, and telemetry
 │       ├── results.png       # 100-epoch training and validation curves
 │       ├── PR_curve.png      # Precision-Recall curve (80.4% mAP@50)
@@ -190,7 +191,8 @@ Performs object detection on an uploaded image with open public access:
 
 ## 📄 Formal Documentation & Checkpoints
 
-- **Formal Report Document:** [`docs/Project_Report_Object_Detection_Suite.docx`](docs/Project_Report_Object_Detection_Suite.docx)
+- **Formal Report Document:** [`docs/Project_Report_Object_Detection_Suite.docx`](docs/Project_Report_Object_Detection_Suite.docx) (Times New Roman, 16 pt, IEEE)
+- **Viva & Defense Guide:** [`docs/Project_Explanation_and_Defense_Guide.docx`](docs/Project_Explanation_and_Defense_Guide.docx) (Times New Roman, 16 pt, IEEE)
 - **Full Markdown Report:** [`REPORT.md`](./REPORT.md)
 - **Trained Model Weights:** [`docs/graphs/exp-2.pt`](docs/graphs/exp-2.pt)
 - **Training CSV Telemetry:** [`docs/graphs/results.csv`](docs/graphs/results.csv)

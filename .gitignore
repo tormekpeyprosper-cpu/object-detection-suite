@@ -44,6 +44,11 @@ web-app/.env
 # Vercel
 .vercel/
 
+# Office / Word lock files
+~$*.docx
+~$*.doc
+*.tmp
+
 # Expo & React Native
 .expo/
 .expo-shared/
