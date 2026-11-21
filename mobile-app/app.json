@@ -20,6 +20,7 @@
       }
     },
     "android": {
+      "package": "com.tormekpey.visiondetect",
       "adaptiveIcon": {
         "backgroundColor": "#0f172a"
       },
