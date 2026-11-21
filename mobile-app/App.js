@@ -213,12 +213,6 @@ export default function App() {
   };
 
   const sendToDetectEndpoint = async (uri, originalW, originalH) => {
-    if (!session || !session.access_token) {
-      Alert.alert('Authentication Required', 'Please sign in to run object detection.');
-      setSession(null);
-      return;
-    }
-
     setDetectionLoading(true);
 
     try {
@@ -235,13 +229,17 @@ export default function App() {
       formData.append('iou', CONFIG.DEFAULT_IOU.toString());
       formData.append('imgsz', CONFIG.DEFAULT_IMGSZ.toString());
 
+      const headers = {
+        'Accept': 'application/json',
+      };
+      if (session && session.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch(targetEndpoint, {
         method: 'POST',
         body: formData,
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
+        headers: headers,
       });
 
       if (response.status === 401) {
@@ -283,133 +281,7 @@ export default function App() {
     : 240;
 
   // ============================================================================
-  // RENDER VIEW: 1. If not authenticated -> Login / Sign-Up Screen
-  // ============================================================================
-  if (!session) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <ExpoStatusBar style="light" />
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.authContainer}
-        >
-          <ScrollView contentContainerStyle={styles.authScroll}>
-            
-            {/* Ambient Brand Header */}
-            <View style={styles.authHeader}>
-              <View style={styles.authBrandBadge}>
-                <Text style={styles.authBrandBadgeText}>V</Text>
-              </View>
-              <Text style={styles.authTitle}>VisionDetect AI</Text>
-              <Text style={styles.authSubtitle}>Zero-Storage In-Memory Vision</Text>
-            </View>
-
-            {/* Auth Glass Card */}
-            <View style={styles.authCard}>
-              
-              {/* Tab Switcher */}
-              <View style={styles.authTabs}>
-                <TouchableOpacity
-                  style={[styles.authTabBtn, authMode === 'signin' && styles.authTabBtnActive]}
-                  onPress={() => {
-                    setAuthMode('signin');
-                    setAuthError(null);
-                    setAuthSuccess(null);
-                  }}
-                >
-                  <Text style={[styles.authTabText, authMode === 'signin' && styles.authTabTextActive]}>
-                    Sign In
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.authTabBtn, authMode === 'signup' && styles.authTabBtnActive]}
-                  onPress={() => {
-                    setAuthMode('signup');
-                    setAuthError(null);
-                    setAuthSuccess(null);
-                  }}
-                >
-                  <Text style={[styles.authTabText, authMode === 'signup' && styles.authTabTextActive]}>
-                    Create Account
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Feedback Alerts */}
-              {authError && (
-                <View style={styles.authAlertError}>
-                  <Text style={styles.authAlertErrorText}>{authError}</Text>
-                </View>
-              )}
-              {authSuccess && (
-                <View style={styles.authAlertSuccess}>
-                  <Text style={styles.authAlertSuccessText}>{authSuccess}</Text>
-                </View>
-              )}
-
-              {/* Email Field */}
-              <Text style={styles.inputLabel}>Email Address</Text>
-              <TextInput
-                style={styles.textInput}
-                value={authEmail}
-                onChangeText={setAuthEmail}
-                placeholder="name@example.com"
-                placeholderTextColor="#64748b"
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoCorrect={false}
-              />
-
-              {/* Password Field */}
-              <Text style={[styles.inputLabel, { marginTop: 12 }]}>Password</Text>
-              <View style={styles.passwordRow}>
-                <TextInput
-                  style={[styles.textInput, { flex: 1 }]}
-                  value={authPassword}
-                  onChangeText={setAuthPassword}
-                  placeholder="••••••••"
-                  placeholderTextColor="#64748b"
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity
-                  style={styles.pwdToggleBtn}
-                  onPress={() => setShowPassword(!showPassword)}
-                >
-                  <Text style={styles.pwdToggleText}>{showPassword ? '🔒' : '👁️'}</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Submit Button */}
-              <TouchableOpacity
-                style={styles.authSubmitBtn}
-                onPress={handleAuthSubmit}
-                disabled={authLoading}
-              >
-                {authLoading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Text style={styles.authSubmitText}>
-                    {authMode === 'signin' ? 'Sign In' : 'Create Account'}
-                  </Text>
-                )}
-              </TouchableOpacity>
-
-              <Text style={styles.authPrivacyNote}>
-                🔒 <Text style={{ fontWeight: 'bold' }}>Strict Zero-Storage:</Text> Analyzed in volatile memory only. Photos are never saved to disk, PostgreSQL, or Supabase Storage.
-              </Text>
-
-            </View>
-
-          </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    );
-  }
-
-  // ============================================================================
-  // RENDER VIEW: 2. Authenticated Detection Studio
+  // RENDER VIEW: Instant Free Open Access Detection Studio
   // ============================================================================
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -424,7 +296,7 @@ export default function App() {
           <View>
             <Text style={styles.headerTitle}>VisionDetect AI</Text>
             <Text style={styles.headerSubtitle} numberOfLines={1}>
-              {session.user.email}
+              {session?.user?.email || '⚡ Free Instant Access'}
             </Text>
           </View>
         </View>
@@ -437,9 +309,11 @@ export default function App() {
             <Text style={styles.settingsIconText}>⚙️</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
-            <Text style={styles.signOutText}>Sign Out</Text>
-          </TouchableOpacity>
+          {session && (
+            <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
+              <Text style={styles.signOutText}>Sign Out</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 

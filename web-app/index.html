@@ -9,9 +9,9 @@
 <body>
 
   <!-- =========================================================================
-       1. Authentication Screen (Supabase Auth - Option A: Dark Glassmorphism)
+       1. Authentication Screen (Hidden - Open Instant Access Mode)
        ========================================================================= -->
-  <div class="auth-wrapper" id="authSection">
+  <div class="auth-wrapper" id="authSection" style="display: none;">
     <div class="auth-ambient-orb orb-1"></div>
     <div class="auth-ambient-orb orb-2"></div>
 
@@ -77,26 +77,26 @@
 
 
   <!-- =========================================================================
-       2. Gated Detection Studio (Visible only to authenticated users)
+       2. Open Instant Access Detection Studio
        ========================================================================= -->
-  <div id="appSection" style="display: none; flex-direction: column; min-height: 100vh;">
+  <div id="appSection" style="display: flex; flex-direction: column; min-height: 100vh;">
     
     <!-- Top Navigation Header -->
     <header class="app-header">
       <div class="brand">
         <div class="brand-icon">V</div>
-        <h1>VisionDetect AI <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:normal;">(Authenticated Studio)</span></h1>
+        <h1>VisionDetect AI <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:normal;">(Instant Open Access)</span></h1>
       </div>
       <div class="header-status">
         <div class="user-badge" id="userBadge">
-          <span>👤</span>
-          <span id="userEmailText">user@domain.com</span>
+          <span>⚡</span>
+          <span id="userEmailText">Free Instant Access</span>
         </div>
         <div class="status-badge" id="backendStatus">
           <span class="status-dot" id="statusDot"></span>
           <span id="statusText">Checking Backend...</span>
         </div>
-        <button class="btn btn-secondary btn-sm" id="btnSignOut" type="button">Sign Out</button>
+        <button class="btn btn-secondary btn-sm" id="btnSignOut" type="button" style="display: none;">Sign Out</button>
       </div>
     </header>
 

@@ -160,16 +160,14 @@ async function checkInitialSession() {
 }
 
 function updateUIForSession(session) {
-  if (session && session.user) {
-    authSection.style.display = "none";
-    appSection.style.display = "flex";
-    userEmailText.textContent = session.user.email || "Authenticated User";
-    checkBackendHealth();
+  authSection.style.display = "none";
+  appSection.style.display = "flex";
+  if (session && session.user && session.user.email) {
+    userEmailText.textContent = session.user.email;
   } else {
-    authSection.style.display = "flex";
-    appSection.style.display = "none";
-    clearAndResetState();
+    userEmailText.textContent = "Free Instant Access";
   }
+  checkBackendHealth();
 }
 
 async function handleAuthSubmit(e) {
@@ -427,14 +425,7 @@ async function performDetection() {
     return;
   }
 
-  // Ensure user is authenticated
-  if (!currentSession || !currentSession.access_token) {
-    alert("Authentication required. Please sign in to run object detection.");
-    updateUIForSession(null);
-    return;
-  }
-
-  const endpoint = apiUrlInput.value.trim() || "http://localhost:8000/api/detect";
+  const endpoint = apiUrlInput.value.trim() || "/api/detect";
   const conf = parseFloat(confSlider.value);
   const iou = parseFloat(iouSlider.value);
   const imgsz = parseInt(imgszSelect.value, 10);
@@ -445,16 +436,19 @@ async function performDetection() {
   formData.append("iou", iou);
   formData.append("imgsz", imgsz);
 
-  showLoading(true, "Authenticating & streaming image to detection pipeline...");
+  showLoading(true, "Streaming frame to live detection pipeline (zero-storage RAM-only)...");
   btnDetect.disabled = true;
 
   try {
+    const headers = {};
+    if (currentSession && currentSession.access_token) {
+      headers["Authorization"] = `Bearer ${currentSession.access_token}`;
+    }
+
     const response = await fetch(endpoint, {
       method: "POST",
       body: formData,
-      headers: {
-        "Authorization": `Bearer ${currentSession.access_token}`,
-      },
+      headers: headers,
     });
 
     if (response.status === 401) {

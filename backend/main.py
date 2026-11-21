@@ -87,23 +87,25 @@ def is_ultralytics_configured() -> bool:
 
 async def verify_supabase_user(authorization: Optional[str] = Header(None)) -> Dict[str, Any]:
     """
-    Authenticate incoming request against Supabase Auth.
-    Verifies the JWT access token passed via Authorization: Bearer <token>.
+    Open Access Authentication Resolver:
+    - If no Authorization header is provided, allows open public access immediately.
+    - If an Authorization header is provided, attempts validation or falls back to public access.
+    - NEVER blocks open access with HTTP 401.
     """
     if not authorization:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing Authorization header. Please sign in to authenticate.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        return {
+            "id": "open-access-user",
+            "email": "visitor@public.access",
+            "role": "public",
+        }
 
     parts = authorization.split()
     if len(parts) != 2 or parts[0].lower() != "bearer":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Authorization header format. Expected 'Bearer <token>'.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        return {
+            "id": "open-access-user",
+            "email": "visitor@public.access",
+            "role": "public",
+        }
 
     token = parts[1]
 
@@ -116,14 +118,13 @@ async def verify_supabase_user(authorization: Optional[str] = Header(None)) -> D
         }
 
     if not is_supabase_configured():
-        # Fallback if Supabase credentials haven't been entered yet
         return {
-            "id": "local-sandbox-user",
-            "email": "demo@local.vision",
-            "role": "authenticated",
+            "id": "open-access-user",
+            "email": "demo@public.vision",
+            "role": "public",
         }
 
-    # Verify directly with Supabase Auth endpoint
+    # Verify directly with Supabase Auth endpoint if token was supplied
     user_endpoint = f"{SUPABASE_URL}/auth/v1/user"
     headers = {
         "Authorization": f"Bearer {token}",
@@ -131,23 +132,20 @@ async def verify_supabase_user(authorization: Optional[str] = Header(None)) -> D
     }
 
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.get(user_endpoint, headers=headers)
 
-        if resp.status_code != 200:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Invalid or expired Supabase authentication token: {resp.text}",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        if resp.status_code == 200:
+            return resp.json()
+    except Exception:
+        pass
 
-        return resp.json()
-
-    except httpx.RequestError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Unable to reach Supabase Auth server: {str(exc)}",
-        )
+    # Graceful fallback to open access user rather than blocking
+    return {
+        "id": "open-access-user",
+        "email": "visitor@public.access",
+        "role": "public",
+    }
 
 
 async def log_detection_telemetry(user_id: str, count: int, max_conf: float, latency_ms: float):
@@ -219,7 +217,7 @@ class DetectResponse(BaseModel):
 @app.get("/api/health")
 async def health_check():
     """
-    System Health, Supabase Auth Status, and Model Readiness Endpoint.
+    System Health, Model Readiness, and Open Public Access Telemetry Endpoint.
     """
     supabase_ready = is_supabase_configured()
     ultralytics_ready = is_ultralytics_configured()
@@ -227,8 +225,9 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "vision-detect-backend",
-        "version": "2.0.0",
-        "auth_provider": "Supabase Auth",
+        "version": "2.1.0",
+        "access": "Open Public Access (Free & Instant - No Login Required)",
+        "auth_provider": "Optional / Open Access",
         "supabase_configured": supabase_ready,
         "supabase_url": SUPABASE_URL if supabase_ready else "not_configured",
         "mode": "ultralytics" if ultralytics_ready else "mock",
@@ -336,20 +335,20 @@ async def detect_objects(
     conf: float = Form(DEFAULT_CONF, description="Confidence threshold (0.0 to 1.0)"),
     iou: float = Form(DEFAULT_IOU, description="IoU threshold for NMS"),
     imgsz: int = Form(DEFAULT_IMGSZ, description="Target inference image size"),
-    authorization: Optional[str] = Header(None, description="Supabase Bearer Token"),
+    authorization: Optional[str] = Header(None, description="Optional Supabase Bearer Token"),
 ):
     """
     POST /api/detect
-    Authenticated vision detection endpoint.
+    Open access vision detection endpoint (Free, Instant, No Login Required).
 
     STRICT ZERO-STORAGE ENFORCEMENT:
-    - User authenticated via Supabase JWT token.
-    - Image bytes read directly into RAM and explicitly deallocated.
+    - Open public access: No mandatory authentication gate.
+    - Image bytes read directly into volatile RAM and explicitly deallocated.
     - Never saved to disk, database, or Supabase Storage.
     """
-    # 1. Authenticate user with Supabase
+    # 1. Resolve user profile (Optional authentication - Open Instant Access)
     user_info = await verify_supabase_user(authorization)
-    user_id = user_info.get("id", "anonymous")
+    user_id = user_info.get("id", "open-access-user")
 
     start_time = time.perf_counter()
     image_bytes: Optional[bytes] = None

@@ -1,24 +1,24 @@
 # Computer Vision Object Detection Project Report
 
-**Project Title:** Unified Cross-Platform Object Detection System (FastAPI + Supabase Auth + Vercel + Web + React Native)  
-**Date:** November 20, 2026  
-**Status:** Final 1,021-Image Retraining Completed (`exp-2`, `yolo26n`) | Verified on Ultralytics | Production Endpoint Integrated  
+**Project Title:** Unified Cross-Platform Object Detection System (FastAPI + Open Instant Access + Vercel + Web + React Native)  
+**Date:** November 21, 2026  
+**Status:** Open Public Access Active | Ultralytics 1,021-Image (`exp-2`, `yolo26n`) Live | Zero-Storage Enforced | Production Deployed  
 
 ---
 
 ## 1. Deployment Process and Endpoint
 
 ### 1.1 Architectural Overview
-The system implements a decoupled, privacy-centric microservice architecture designed to serve both browser clients (Web) and mobile clients (React Native Expo) through a single unified backend API gateway deployed on Vercel with integrated Supabase Authentication:
+The system implements a decoupled, privacy-centric microservice architecture designed to serve both browser clients (Web) and mobile clients (React Native Expo) through a single unified backend API gateway deployed on Vercel with open public access and optional Supabase Authentication:
 
 ```
 ┌─────────────────────────────────┐       ┌──────────────────────────────────┐
 │  Web Application (Vite/Canvas)  │       │  React Native Expo (Mobile App)  │
 │  - Cyberpunk Dark Glassmorphism │       │  - Zero-Storage Camera Capture   │
-│  - Supabase JWT Session Storage │       │  - Supabase JWT Session Storage  │
+│  - Free Instant Open Scanner    │       │  - Instant Camera & Library Scan │
 └────────────────┬────────────────┘       └────────────────┬─────────────────┘
                  │                                         │
-                 │  POST /api/detect (FormData + Bearer)   │
+                 │  POST /api/detect (FormData, Open Access)│
                  ▼                                         ▼
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                    Vercel Edge & Serverless Gateway                        │
@@ -29,25 +29,25 @@ The system implements a decoupled, privacy-centric microservice architecture des
                                       ▼
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                      FastAPI Backend Microservice                          │
-│  1. Authenticate Bearer JWT with Supabase (/auth/v1/user)                  │
+│  1. Open Public Access (No mandatory login required; optional Bearer JWT)  │
 │  2. In-Memory Byte Stream (STRICT ZERO-STORAGE: No disk/temp/DB writes)   │
 │  3. Optional Non-Image Telemetry Log (/rest/v1/detection_logs)             │
-│  4. Dynamic Routing: Ultralytics Cloud vs. Instant Mock Mode               │
+│  4. Live Ultralytics Cloud Run Inference (exp-2, yolo26n)                  │
 └─────────────────────────────────────┬──────────────────────────────────────┘
                                       │
                  ┌────────────────────┴───────────────────┐
                  ▼                                        ▼
    [ Mode A: Live Ultralytics Cloud ]       [ Mode B: In-Memory Mock Mode ]
     Forward to /predict API                  Instant Realistic Detection Boxes
-    Authorization: Bearer <KEY>              Zero-Config Dev & QA Validation
-    90s Timeout, Normalized Coordinates      Active until 1,000-image model merged
+    Authorization: Bearer <KEY>              Zero-Config Dev & QA Fallback
+    90s Timeout, Normalized Coordinates      Seamless Dynamic Routing
 ```
 
 ### 1.2 Endpoint Specification
 The backend exposes two primary HTTP endpoints over port `8000` (locally) and `/api/*` (on Vercel):
 
 #### `POST /api/detect`
-- **Authentication:** Required (`Authorization: Bearer <supabase_access_token>`).
+- **Authentication:** Optional (Open public access enabled: visitors can immediately stream image frames for detection without signing in; valid Supabase Bearer tokens are optionally parsed).
 - **Content-Type:** `multipart/form-data`
 - **Parameters:**
   - `file`: Raw binary image payload (JPEG, PNG, WEBP).
@@ -279,10 +279,11 @@ mixup: 0.0
 - RAM deallocation verified via explicit garbage collection triggers after every request lifecycle.
 
 ### 5.5 Production Smoke Test & Verification Telemetry
-Automated end-to-end verification executed against the live Vercel deployment with active Ultralytics Cloud Run inference:
+Automated end-to-end verification executed against the live Vercel deployment with open public access and active Ultralytics Cloud Run inference:
 - **Target URL:** `https://object-detection-suite.vercel.app`
-- **Health Verification:** `GET /api/health` returned HTTP 200 with status `healthy`, Supabase auth confirmed, `mode: "ultralytics"`, `ultralytics_configured: true`, and zero-storage policy enforced.
-- **Authentication Gate:** `POST /api/detect` without Bearer token returned HTTP 401 (`Missing Authorization header`).
-- **Authenticated Live Inference:** `POST /api/detect` with Bearer token returned HTTP 200 with `mode: "ultralytics"`, message `"Predictions returned from connected Ultralytics endpoint."`, 460.24 ms live inference latency, and immediate in-memory byte deallocation (`del image_bytes; gc.collect()`).
-- **Mobile Alignment:** Confirmed `mobile-app/config.js` routes to `https://object-detection-suite.vercel.app`.
-- **Disk Leak Audit:** Confirmed 0 image files leaked across the entire repository. All 5/5 verification tests passed cleanly.
+- **Health Verification:** `GET /api/health` returned HTTP 200 with status `healthy`, `access: "Open Public Access (Free & Instant - No Login Required)"`, `mode: "ultralytics"`, `ultralytics_configured: true`, and zero-storage policy enforced.
+- **Open Public Access Verification:** `POST /api/detect` without any Bearer token returned HTTP 200 with `status: "success"`, `user_id: "open-access-user"`, verifying zero mandatory login barriers.
+- **Authenticated / Dev Token Passthrough:** `POST /api/detect` with Bearer token returned HTTP 200 with `mode: "ultralytics"`, message `"Predictions returned from connected Ultralytics endpoint."`, and immediate in-memory byte deallocation (`del image_bytes; gc.collect()`).
+- **Web App Direct Scanner:** Visiting `https://object-detection-suite.vercel.app` immediately presents the live detection studio without an authentication modal.
+- **Mobile Alignment:** Confirmed `mobile-app/App.js` and `mobile-app/config.js` open directly into the live detector without a sign-in screen.
+- **Disk Leak Audit:** Confirmed 0 image files leaked across the entire repository. All verification tests passed cleanly.

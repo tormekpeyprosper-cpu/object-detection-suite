@@ -26,23 +26,30 @@ def test_live_health():
     assert "STRICT_NO_STORAGE" in data.get("storage_policy", ""), "Storage policy must be zero-storage"
     print("  >>> PASS: /api/health is live, healthy, and enforcing zero-storage.")
 
-def test_detect_unauthorized():
-    print(f"\n[TEST 2] Verifying Auth Gate (Unauthenticated Request): {BASE_URL}/api/detect")
+def test_detect_open_access():
+    print(f"\n[TEST 2] Verifying Open Public Access (Unauthenticated Request): {BASE_URL}/api/detect")
     img = Image.new("RGB", (320, 240), color=(70, 130, 180))
     buf = io.BytesIO()
     img.save(buf, format="JPEG")
     image_bytes = buf.getvalue()
 
-    files = {"file": ("unauth_test.jpg", image_bytes, "image/jpeg")}
+    headers = {"User-Agent": "SmokeTest/1.0"}
+    files = {"file": ("open_access_test.jpg", image_bytes, "image/jpeg")}
     data = {"conf": 0.25, "iou": 0.50, "imgsz": 640}
 
-    with httpx.Client(timeout=30.0) as client:
-        resp = client.post(f"{BASE_URL}/api/detect", files=files, data=data)
+    with httpx.Client(timeout=45.0) as client:
+        resp = client.post(f"{BASE_URL}/api/detect", headers=headers, files=files, data=data)
 
     print(f"  Response Status: HTTP {resp.status_code}")
     print(f"  Response Body: {resp.text}")
-    assert resp.status_code == 401, f"Expected 401 Unauthorized, got {resp.status_code}"
-    print("  >>> PASS: Unauthenticated detection correctly rejected with 401 Unauthorized.")
+    assert resp.status_code == 200, f"Expected 200 OK for open access, got {resp.status_code}"
+    res = resp.json()
+    assert res.get("status") == "success", "Response status must be 'success'"
+    assert res.get("user_id") in ("open-access-user", "anonymous"), f"Expected open access user, got {res.get('user_id')}"
+    print(f"  >>> PASS: Open public access confirmed! Inference succeeded with user_id: {res.get('user_id')}.")
+
+    del image_bytes
+    del buf
 
 def test_detect_authenticated():
     print(f"\n[TEST 3] Running In-Memory Detection with Bearer Token: {BASE_URL}/api/detect")
@@ -123,7 +130,7 @@ if __name__ == "__main__":
     print(f"Target URL: {BASE_URL}")
     print("=" * 70)
     test_live_health()
-    test_detect_unauthorized()
+    test_detect_open_access()
     test_detect_authenticated()
     test_mobile_config()
     test_disk_zero_storage_audit()

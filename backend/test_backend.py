@@ -1,8 +1,9 @@
 """
-Backend Unit and Integration Verification Test Suite (Supabase Auth + Mock Detection)
+Backend Unit and Integration Verification Test Suite (Open Access + Ultralytics Pipeline)
 """
 import os
 import sys
+import asyncio
 
 # Add backend directory to sys.path
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -12,9 +13,26 @@ import main
 
 def test_config():
     print("Testing config detection...")
-    assert not main.is_ultralytics_configured(), "Should be False in mock mode"
-    assert main.is_supabase_configured(), "Supabase should be configured with user credentials"
-    print("  [OK] Mock inference & Supabase Auth configuration verified.")
+    assert isinstance(main.is_ultralytics_configured(), bool)
+    assert main.is_supabase_configured(), "Supabase should be configured with project credentials"
+    print(f"  [OK] Ultralytics active: {main.is_ultralytics_configured()}, Supabase active: {main.is_supabase_configured()}")
+
+def test_open_access_auth():
+    print("Testing open public access authentication resolver...")
+    # Unauthenticated visitor
+    user = asyncio.run(main.verify_supabase_user(None))
+    assert user["id"] == "open-access-user"
+    assert user["role"] == "public"
+
+    # Visitor with empty header
+    user2 = asyncio.run(main.verify_supabase_user(""))
+    assert user2["id"] == "open-access-user"
+
+    # Dev token bypass
+    user3 = asyncio.run(main.verify_supabase_user("Bearer dev-test-token"))
+    assert user3["id"] == "dev-user-001"
+    assert user3["role"] == "authenticated"
+    print("  [OK] Open access verified: unauthenticated visitors granted instant detection access.")
 
 def test_mock_generation():
     print("Testing mock detection generation...")
@@ -64,6 +82,7 @@ if __name__ == "__main__":
     print("Running Shared Backend Validation Suite")
     print("=" * 60)
     test_config()
+    test_open_access_auth()
     test_mock_generation()
     test_ultralytics_parser()
     test_cors_and_routes()
