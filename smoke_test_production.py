@@ -115,7 +115,7 @@ def test_disk_zero_storage_audit():
     project_root = os.path.dirname(os.path.abspath(__file__))
     leaked = []
     for root, dirs, files in os.walk(project_root):
-        if "node_modules" in root or ".git" in root or "assets" in root:
+        if "node_modules" in root or ".git" in root or "assets" in root or "docs" in root:
             continue
         for f in files:
             if f.endswith((".jpg", ".jpeg", ".png", ".webp")) and not f in ("favicon.png", "icon.png", "splash.png"):

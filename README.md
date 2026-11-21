@@ -1,6 +1,6 @@
 # Cross-Platform Object Detection System
 
-A complete full-stack computer vision application featuring **ONE shared Python FastAPI backend** and **TWO clients** (a responsive HTML5/Canvas Vite web application and an Expo React Native mobile application) secured with **Supabase Authentication**, deployed via **Vercel Serverless**, and backed by an in-memory, zero-disk-storage privacy architecture.
+A complete full-stack computer vision application featuring **ONE shared Python FastAPI backend** and **TWO clients** (a responsive HTML5/Canvas Vite web application and an Expo React Native mobile application) with **Open Public Instant Access**, deployed via **Vercel Serverless**, backed by a live **Ultralytics YOLO26n Cloud Run inference container**, and enforced by a strict in-memory, zero-disk-storage privacy architecture.
 
 ---
 
@@ -12,27 +12,35 @@ object-detection-suite/
 │   ├── index.py              # Serverless bridge directing /api/* to FastAPI
 │   └── requirements.txt      # Python dependencies for Vercel deployment
 ├── backend/                  # Shared FastAPI Python Backend
-│   ├── main.py               # Supabase-authenticated detection & health APIs
-│   ├── test_backend.py       # Automated validation test suite
+│   ├── main.py               # Open-access detection & health APIs with live Ultralytics proxy
+│   ├── test_backend.py       # Automated backend test suite
 │   ├── requirements.txt      # Python dependencies (FastAPI, Uvicorn, HTTPX, Pillow)
-│   ├── .env                  # Live environment variables (Supabase & Mock Mode)
+│   ├── .env                  # Live environment variables (Ultralytics & Supabase)
 │   └── .env.example          # Environment variable template
+├── docs/                     # Documentation and Training Artifacts
+│   ├── Project_Report_Object_Detection_Suite.docx # Complete formal evaluation report
+│   └── graphs/               # Generated evaluation plots, weights, and telemetry
+│       ├── results.png       # 100-epoch training and validation curves
+│       ├── PR_curve.png      # Precision-Recall curve (80.4% mAP@50)
+│       ├── F1_curve.png      # F1 vs. Confidence optimization curve (Peak 0.857)
+│       ├── confusion_matrix.png # Confusion matrix counts
+│       ├── confusion_matrix_normalized.png # Normalized confusion matrix
+│       ├── results.csv       # Raw epoch metrics log (101 epochs)
+│       └── exp-2.pt          # PyTorch trained weights checkpoint (5.54 MB)
 ├── web-app/                  # Modern Web Client (HTML5 Canvas + Vite)
-│   ├── index.html            # Cyberpunk Dark Glassmorphic Login + Detection Studio
+│   ├── index.html            # Cyberpunk Dark Glassmorphic Instant Detection Studio
 │   ├── styles.css            # Option A styling: frosted glass, glows & gradients
-│   ├── app.js                # Supabase Auth, canvas overlay & webcam engine
-│   ├── package.json          # Vite scripts & @supabase/supabase-js dependency
+│   ├── app.js                # Open instant detection, canvas overlay & webcam engine
+│   ├── package.json          # Vite scripts & dependencies
 │   ├── vite.config.js        # Vite local development server config (port 3000)
-│   ├── .env                  # Vite client environment (VITE_SUPABASE_*)
-│   ├── .env.example          # Client env template
 │   └── dist/                 # Production-built bundle for Vercel Edge CDN
 ├── mobile-app/               # Cross-Platform Mobile Client (React Native + Expo)
-│   ├── App.js                # Supabase Auth Screen + Camera/Gallery Vision Studio
-│   ├── config.js             # Supabase & backend API endpoints configuration
-│   ├── app.json              # Expo application manifest & permissions
-│   ├── babel.config.js       # Expo Babel preset
-│   ├── package.json          # React Native, Expo, and @supabase/supabase-js
-│   └── README.md             # Mobile-specific setup & device connection guide
+│   ├── App.js                # Instant Camera/Gallery Vision Studio (No login barrier)
+│   ├── config.js             # API endpoints configuration (points to live Vercel)
+│   ├── app.json              # Expo application manifest & standalone APK package
+│   ├── eas.json              # EAS Build configuration for Android preview APK
+│   └── package.json          # React Native and Expo dependencies
+├── smoke_test_production.py  # Automated production verification test suite
 ├── vercel.json               # Vercel deployment routing (FastAPI + Vite static)
 ├── REPORT.md                 # Complete formal evaluation & deployment report
 └── README.md                 # Project documentation & run commands
@@ -43,10 +51,56 @@ object-detection-suite/
 ## 🔒 Strict Zero-Storage Privacy Policy
 
 Both the backend and clients enforce a strict **In-Memory Zero-Storage Architecture**:
-- **Backend:** Uploaded image bytes are read directly into volatile memory (`image_bytes = await file.read()`). Images are **never** saved to disk, temp folders, caches, databases, or Supabase Storage. Bytes are explicitly deallocated and garbage-collected immediately after inference.
-- **Supabase Usage:** Supabase is utilized strictly for identity authentication (JWT Bearer tokens) and optional lightweight non-image telemetry (user ID, counts, inference latency). Zero image files or base64 blobs are written to Supabase.
+- **Backend:** Uploaded image bytes are read directly into volatile memory (`image_bytes = await file.read()`). Images are **never** saved to disk, temp folders (`/tmp`), caches, databases, or Supabase Storage. Memory references are explicitly cleared via `del image_bytes; gc.collect()` immediately after inference.
 - **Web Client:** Images are loaded into in-memory bitmaps. The "Clear / Reset" button purges the canvas, revokes object URLs, and resets state.
-- **Mobile Client:** Captured photos use transient cache references and are **never** saved to the device's camera roll or media library. Clearing or resetting purges all image references.
+- **Mobile Client:** Captured photos use transient cache references and are **never** saved to the device's camera roll or media library.
+
+---
+
+## 🚀 Live Production Deployment
+
+The system is deployed and fully verified live:
+- **Production Web Studio:** [https://object-detection-suite.vercel.app](https://object-detection-suite.vercel.app)
+- **API Health Endpoint:** [https://object-detection-suite.vercel.app/api/health](https://object-detection-suite.vercel.app/api/health)
+- **Detection Endpoint:** `https://object-detection-suite.vercel.app/api/detect`
+- **GitHub Repository:** [https://github.com/tormekpeyprosper-cpu/object-detection-suite](https://github.com/tormekpeyprosper-cpu/object-detection-suite)
+- **Inference Service:** Dedicated Ultralytics Cloud Run container in Europe Southwest (`europe-southwest1`).
+
+---
+
+## 📊 Model Performance & Evaluation Metrics (`exp-2`, 1,021 Images)
+
+The production model was trained using the state-of-the-art **YOLO26 Nano (`yolo26n`)** architecture on an enterprise cloud host equipped with an **NVIDIA RTX PRO 6000 Blackwell Server Edition GPU** (97,252 MiB VRAM).
+
+### Comparative Metric Performance
+| Metric | Baseline (`exp`, 945 imgs, YOLOv8n) | Production (`exp-2`, 1,021 imgs, YOLO26n) | Delta / Gain |
+| :--- | :---: | :---: | :---: |
+| **Precision (P)** | **90.8%** | **91.7%** | **+0.9%** |
+| **Recall (R)** | **78.6%** | **80.0%** | **+1.4%** |
+| **mAP@0.50** | **80.5%** | **80.4%** | **-0.1%** |
+| **mAP@0.50:0.95** | **31.7%** | **34.9%** | **+3.2%** |
+
+---
+
+### Graphical Evaluation Figures
+
+#### 1. Training & Validation Curves Across 100 Epochs
+![Training Results](docs/graphs/results.png)
+*Complete 100-epoch convergence history showing training/validation loss descent and precision/recall/mAP progression.*
+
+#### 2. Precision-Recall Curve (80.4% mAP@0.50)
+![Precision-Recall Curve](docs/graphs/PR_curve.png)
+*High precision (>95%) sustained through 0.60 recall, ensuring minimal false positives.*
+
+#### 3. F1-Confidence Optimization Curve (Peak F1 = 0.857)
+![F1-Confidence Curve](docs/graphs/F1_curve.png)
+*Peak F1 score attained at confidence = 0.61. Default production threshold (0.25) preserves 80.0% recall.*
+
+#### 4. Confusion Matrices (Counts & Normalized)
+| Raw Detection Counts | Normalized Distribution |
+| :---: | :---: |
+| ![Confusion Matrix](docs/graphs/confusion_matrix.png) | ![Normalized Confusion Matrix](docs/graphs/confusion_matrix_normalized.png) |
+*Raw counts and normalized confusion matrix across validation classes and background proposals.*
 
 ---
 
@@ -54,170 +108,89 @@ Both the backend and clients enforce a strict **In-Memory Zero-Storage Architect
 
 ### 1. Backend Service (`backend/`)
 
-#### Prerequisites
-- Python 3.10+ (tested on Python 3.14)
-- `pip`
-
 #### Setup & Run Locally
 ```bash
-# Navigate to the backend directory
 cd backend
-
-# Install dependencies
 pip install -r requirements.txt
-
-# Start the development server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
-The API will be live at `http://localhost:8000`.  
 - Interactive Swagger API Documentation: `http://localhost:8000/docs`
 - Health check: `http://localhost:8000/api/health`
 
-#### Run Backend Verification Tests
+#### Run Verification Tests
 ```bash
 python test_backend.py
 ```
-
-#### Inference Modes (Mock vs. Ultralytics)
-- **Mock Mode (Default):** The backend returns realistic mock bounding boxes adapted to image dimensions. This allows frontend development and testing immediately before the final 1,000-image model is deployed.
-- **Live Ultralytics Cloud Mode:** Update `backend/.env` with your real endpoint and API key to stream inferences directly through Ultralytics YOLO Hub:
-  ```env
-  ULTRALYTICS_ENDPOINT_URL=https://api.ultralytics.com/v1/predict/YOUR_MODEL_ID
-  ULTRALYTICS_API_KEY=your_ultralytics_bearer_token
-  ```
 
 ---
 
 ### 2. Web Application (`web-app/`)
 
-#### Prerequisites
-- Node.js 18+ and `npm`
-
 #### Setup & Run Locally
 ```bash
-# Navigate to the web-app directory
 cd web-app
-
-# Install dependencies (including @supabase/supabase-js)
 npm install
-
-# Start the Vite development server
 npm run dev
 ```
-Open `http://localhost:3000` in your browser.
-
-#### Features
-- **Option A Cyberpunk Glassmorphic Authentication:** Frosted glass card, dark slate background (`#0f172a`), neon cyan & blue accents, and show/hide password toggle.
-- **Gated Studio:** Main vision detection tools are locked until authenticated via Supabase.
-- **Dual Input Modes:** Drag-and-drop file upload or live webcam frame capture.
-- **Canvas Overlay Engine:** High-visibility neon bounding boxes, labels, and confidence percentages.
-- **Clear / Reset:** Instantly purges the canvas, stops webcam streams, and de-references memory.
+Open `http://localhost:3000` to access the live detection studio.
 
 #### Build for Production
 ```bash
 npm run build
 ```
-Generates a static production bundle in `web-app/dist/`.
 
 ---
 
 ### 3. Mobile Application (`mobile-app/`)
 
-#### Prerequisites
-- Node.js 18+ and `npm`
-- **Expo Go** app installed on your physical iOS or Android device (or an Android Emulator / iOS Simulator).
-
-#### Configure Backend Connection
-Open `mobile-app/config.js` and set `API_BASE_URL`:
-- **Expo Web / iOS Simulator:** `http://localhost:8000`
-- **Android Emulator:** `http://10.0.2.2:8000`
-- **Physical Phone on Local Wi-Fi:** `http://<YOUR_COMPUTER_IP>:8000` (e.g. `http://192.168.1.150:8000`)
-- **Vercel Deployment:** `https://object-detection-suite.vercel.app`
-
-*(Note: You can also tap the ⚙️ icon in the app header to edit the URL directly on your device at any time).*
-
 #### Setup & Run
 ```bash
-# Navigate to the mobile-app directory
 cd mobile-app
-
-# Install dependencies
 npm install
-
-# Start the Expo development server
 npx expo start
 ```
-- Press `w` to open in browser (Expo Web)
-- Press `a` to run on connected Android emulator
-- Press `i` to run on iOS simulator (macOS)
-- Scan the printed QR code with **Expo Go** on your physical phone
+- Scan the printed QR code with **Expo Go** on your physical Android or iOS device.
 
----
-
-## 🚀 Live Production Deployment
-
-The system is deployed live on Vercel:
-- **Production URL:** [https://object-detection-suite.vercel.app](https://object-detection-suite.vercel.app)
-- **API Health Endpoint:** [https://object-detection-suite.vercel.app/api/health](https://object-detection-suite.vercel.app/api/health)
-- **Vision Detection Endpoint:** `https://object-detection-suite.vercel.app/api/detect`
-- **GitHub Repository:** [https://github.com/tormekpeyprosper-cpu/object-detection-suite](https://github.com/tormekpeyprosper-cpu/object-detection-suite)
-
-### Re-deploying via Vercel CLI
+#### Standalone Android APK Build
+Build configuration is located in `mobile-app/eas.json`:
 ```bash
-vercel deploy --prod
+npx eas-cli build -p android --profile preview
 ```
-
-### Environment Variables on Vercel
-In your Vercel Project Settings (`Settings` -> `Environment Variables`), configure:
-- `SUPABASE_URL`: `https://hlhkktramvskboiqnnju.supabase.co`
-- `SUPABASE_ANON_KEY`: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
-- `ULTRALYTICS_ENDPOINT_URL`: *(Leave empty for mock mode until model is ready)*
-- `ULTRALYTICS_API_KEY`: *(Leave empty for mock mode until model is ready)*
-
-Vercel automatically:
-1. Builds `web-app/` into static assets via Vite.
-2. Deploys `api/index.py` as a serverless Python FastAPI function.
-3. Routes all `/api/*` requests to the FastAPI backend and all other requests to the web app.
 
 ---
 
 ## 📡 API Reference
 
 ### `GET /api/health`
-Checks service health, Supabase auth status, and active mode.
+Checks service health and active inference mode:
 ```json
 {
   "status": "healthy",
   "service": "vision-detect-backend",
   "version": "2.0.0",
-  "auth_provider": "Supabase Auth",
-  "supabase_configured": true,
-  "mode": "mock",
+  "mode": "ultralytics",
+  "ultralytics_configured": true,
+  "access": "Open Public Access (Free & Instant - No Login Required)",
   "storage_policy": "STRICT_NO_STORAGE (In-memory only, zero disk/Supabase image storage)"
 }
 ```
 
 ### `POST /api/detect`
-Performs object detection on an uploaded image.
+Performs object detection on an uploaded image with open public access:
 - **Method:** `POST`
-- **Headers:** `Authorization: Bearer <SUPABASE_JWT_TOKEN>`
+- **Authentication:** None required (Open Public Access)
 - **Content-Type:** `multipart/form-data`
 - **Form Fields:**
   - `file`: `[binary image data]` (Required)
-  - `conf`: `0.25` (Optional float, 0.0 - 1.0)
-  - `iou`: `0.50` (Optional float, 0.0 - 1.0)
-  - `imgsz`: `640` (Optional int, e.g., 640 or 1280)
+  - `conf`: `0.25` (Optional float, default 0.25)
+  - `iou`: `0.50` (Optional float, default 0.50)
+  - `imgsz`: `640` (Optional int, default 640)
 
 ---
 
-## 📊 Dataset & Model Metrics Summary
+## 📄 Formal Documentation & Checkpoints
 
-Refer to [`REPORT.md`](./REPORT.md) for detailed documentation:
-- **Baseline Dataset:** 949 initial images from `"WhatsApp Unknown 2026 10 21 at 2..."` archive.
-- **Current Splits:** 759 Train / 114 Val / 76 Test (945 labeled, 4 pending).
-- **Target Expansion:** 1,000 total images (800 Train / 120 Val / 80 Test).
-- **Baseline Experiment (`exp`) Performance:**
-  - **Precision:** 90.8%
-  - **Recall:** 78.6%
-  - **mAP@50:** 80.5%
-  - **mAP@50-95:** 31.7%
+- **Formal Report Document:** [`docs/Project_Report_Object_Detection_Suite.docx`](docs/Project_Report_Object_Detection_Suite.docx)
+- **Full Markdown Report:** [`REPORT.md`](./REPORT.md)
+- **Trained Model Weights:** [`docs/graphs/exp-2.pt`](docs/graphs/exp-2.pt)
+- **Training CSV Telemetry:** [`docs/graphs/results.csv`](docs/graphs/results.csv)

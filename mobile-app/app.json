@@ -25,7 +25,8 @@
         "backgroundColor": "#0f172a"
       },
       "permissions": [
-        "CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -38,6 +39,11 @@
           "photosPermission": "The app accesses photos solely for in-memory detection. No photos are permanently stored."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6811fff6-065f-4293-b418-4ebe84c3725c"
+      }
+    }
   }
 }
