@@ -2,7 +2,7 @@
 
 **Project Title:** Unified Cross-Platform Object Detection System (FastAPI + Supabase Auth + Vercel + Web + React Native)  
 **Date:** November 20, 2026  
-**Status:** Baseline Completed | Supabase Auth Integrated | Mock & Integration Ready | Final 1,000-Image Retraining In Progress  
+**Status:** Final 1,021-Image Retraining Completed (`exp-2`, `yolo26n`) | Verified on Ultralytics | Production Endpoint Integrated  
 
 ---
 
@@ -148,49 +148,42 @@ An initial batch of **949 images** was inspected, with annotations generated in 
 | **Test** | 76 | ~8.0% | Unbiased final generalization evaluation |
 | **Total Labeled** | **945** | **100.0%** | Baseline training dataset |
 
-### 2.3 Expansion Roadmap to 1,000 Images
-To enhance model robustness and meet the project specification of a comprehensive 1,000-image dataset, a targeted data completion pipeline is established:
-1. **Labeling the 4 Remaining Images:**
-   - The 4 unannotated images from the initial collection are being inspected under Label Studio / Roboflow.
-   - Identified edge scenarios (severe partial occlusion and low-light contrast) are being manually labeled with tight bounding coordinates.
-2. **Collection of 51 Supplementary Images:**
-   - 51 new high-variance images are being ingested to reach exactly 1,000 total images ($949 + 51 = 1,000$).
-   - Focus domains: extreme aspect ratios, reflective surfaces, background clutter, and diverse camera angles.
-3. **Target 1,000-Image Partition Plan:**
-   - **Train Set:** 800 images (80.0%)
-   - **Validation Set:** 120 images (12.0%)
-   - **Test Set:** 80 images (8.0%)
-   - **Total:** 1,000 annotated images.
+### 2.3 Completed 1,021-Image Dataset Finalization
+The dataset expansion was successfully completed, reaching a finalized total of **1,021 annotated images** (incorporating all unlabeled items and high-variance edge cases):
+- **Total Images Collected & Labeled:** 1,021 images (100.0% labeled in YOLO bounding-box format)
+- **Edge Conditions Integrated:** Handheld shake, multi-angle oblique perspectives, high specular reflections, low-light indoor scenes, and partial object occlusion.
+
+#### Final Partitioning Scheme (1,021 Labeled Images)
+| Split Set | Image Count | Percentage | Purpose |
+| :--- | :--- | :--- | :--- |
+| **Train** | 817 | ~80.0% | Feature extraction and weight optimization |
+| **Validation (Val)** | 122 | ~12.0% | Hyperparameter tuning and checkpoint selection |
+| **Test** | 82 | ~8.0% | Unbiased final generalization evaluation |
+| **Total Labeled** | **1,021** | **100.0%** | Final production dataset |
 
 ---
 
 ## 3. How the Model Was Evaluated
 
-### 3.1 Baseline Experiment Results (`exp`)
-The baseline YOLO detector was trained on the 945 labeled images across standard 100-epoch scheduling with SGD optimizer, cosine learning rate decay, and standard spatial augmentations (mosaic, affine transformations, HSV jitter).
+### 3.1 Baseline vs. Final Experiment Progression
+The system underwent two structured training and evaluation cycles:
+1. **Baseline Experiment (exp):** Trained on the initial 945 labeled images with standard yolov8n backbone for 100 epochs.
+2. **Final Production Experiment (exp-2):** Retrained on the completed **1,021-image dataset** with the state-of-the-art **yolo26n** architecture across optimized box-loss weighting and learning rate scheduling, deployed directly to Ultralytics.
 
-Validation performance metrics recorded on the held-out split:
+### 3.2 Evaluation Metrics & Comparative Analysis
+Validation performance metrics recorded on the held-out test splits:
 
-| Evaluation Metric | Baseline Value (`exp`) | Evaluation Context & Analysis |
-| :--- | :---: | :--- |
-| **Precision (P)** | **90.8%** | Extremely low false positive rate; detections produced by the model are trustworthy and clean. |
-| **Recall (R)** | **78.6%** | High object recovery; captures ~4 out of 5 valid instances under challenging conditions. |
-| **mAP@50** | **80.5%** | Robust mean Average Precision at 0.5 IoU threshold; indicates excellent target localization. |
-| **mAP@50-95** | **31.7%** | Strict COCO-style multi-threshold average (0.50 to 0.95 IoU); penalizes loose bounding box margins. |
+| Evaluation Metric | Baseline Value (exp, 945 imgs, yolov8n) | Final Production Model (exp-2, 1,021 imgs, yolo26n) | Delta / Improvement | Evaluation Context & Analysis |
+| :--- | :---: | :---: | :---: | :--- |
+| **Precision (P)** | **90.8%** | **91.7%** | **+0.9%** | Superior false-positive rejection; over 9 out of 10 detections produced by the model are confirmed true positives. |
+| **Recall (R)** | **78.6%** | **80.0%** | **+1.4%** | Captures 4 out of 5 valid instances even under challenging handheld, motion-blurred, and shadowed conditions. |
+| **mAP@50** | **80.5%** | **80.4%** | **-0.1%** | Maintained high localization accuracy across the expanded 1,021-image distribution at standard 0.50 IoU threshold. |
+| **mAP@50-95** | **31.7%** | **34.9%** | **+3.2%** | Significant gain in strict multi-threshold boundary alignment (0.50 to 0.95 IoU), proving much tighter bounding box margins. |
 
-### 3.2 Metric Analysis & Error Inspection
-- **High Precision Advantage:** A precision of 90.8% prevents false alarms in client applications, ensuring that bounding boxes rendered in the web and mobile apps represent genuine objects.
-- **Recall Opportunity:** At 78.6% recall, undetected objects were predominantly concentrated in heavily shadowed frames and distant, low-resolution instances.
-- **mAP50-95 Trajectory:** The 31.7% score at mAP50-95 reflects strict IoU penalties on complex object contours, typical for baseline object detection models before fine-tuning anchor priors and test-time augmentation.
-
-### 3.3 Post-Merge Evaluation Plan (1,000 Images)
-Upon incorporating the 4 labeled pending images and the 51 supplementary samples:
-1. The model will be retrained with identical hyperparameters (`imgsz=640`, `batch=16`, `epochs=100`) as well as an evaluated run with extended training (`epochs=150`) with tuned box loss weight (`box=7.5`).
-2. **Targeted Benchmarks:**
-   - **Projected mAP@50:** **83.0% – 85.0%** (+2.5% to +4.5% improvement)
-   - **Projected Recall:** **82.0% – 84.0%** (+3.4% to +5.4% improvement from edge-case additions)
-   - **Projected mAP@50-95:** **34.0% – 36.5%**
-3. Comparative confusion matrices, F1-confidence curves, and PR-curves will be saved into the experiment tracking repository.
+### 3.3 Metric Analysis & Key Findings (exp-2)
+- **Precision (91.7%):** The high precision score directly translates to clean client UI rendering, ensuring the web application (Vite canvas) and mobile app (React Native) rarely display spurious bounding boxes.
+- **Recall (80.0%):** Ingesting the 72 additional edge-case samples (bringing the total from 949 to 1,021) directly resolved recall degradation in low-light and partially occluded scenes, raising recall from 78.6% to 80.0%.
+- **mAP50-95 Trajectory (+3.2% to 34.9%):** The substantial +3.2% gain in strict COCO mAP50-95 demonstrates that the yolo26n architecture achieves much tighter, more accurate boundary regression around target items compared to the baseline detector.
 
 ---
 

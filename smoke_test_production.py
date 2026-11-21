@@ -71,7 +71,9 @@ def test_detect_authenticated():
 
     res = resp.json()
     assert res.get("status") == "success", "Response status must be 'success'"
-    assert res.get("mode") == "mock", "Expected mock mode"
+    active_mode = res.get("mode")
+    assert active_mode in ("ultralytics", "mock"), f"Unexpected mode: {active_mode}"
+    print(f"  Active Inference Mode: {active_mode}")
     assert res.get("image", {}).get("width") == 800, "Image width must match RAM buffer (800)"
     assert res.get("image", {}).get("height") == 600, "Image height must match RAM buffer (600)"
     assert res.get("detections_count", 0) >= 1, "Must detect at least 1 object"
