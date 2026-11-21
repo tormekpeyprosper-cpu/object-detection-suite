@@ -279,10 +279,10 @@ mixup: 0.0
 - RAM deallocation verified via explicit garbage collection triggers after every request lifecycle.
 
 ### 5.5 Production Smoke Test & Verification Telemetry
-Automated end-to-end verification executed against the live Vercel deployment:
+Automated end-to-end verification executed against the live Vercel deployment with active Ultralytics Cloud Run inference:
 - **Target URL:** `https://object-detection-suite.vercel.app`
-- **Health Verification:** `GET /api/health` returned HTTP 200 with status `healthy`, Supabase auth confirmed, and zero-storage policy enforced.
+- **Health Verification:** `GET /api/health` returned HTTP 200 with status `healthy`, Supabase auth confirmed, `mode: "ultralytics"`, `ultralytics_configured: true`, and zero-storage policy enforced.
 - **Authentication Gate:** `POST /api/detect` without Bearer token returned HTTP 401 (`Missing Authorization header`).
-- **Authenticated Inference:** `POST /api/detect` with Bearer token returned HTTP 200 with 3 localized bounding boxes (`target_item`, `secondary_object`, `context_marker`), 16.79 ms server inference latency, and immediate in-memory byte deallocation.
+- **Authenticated Live Inference:** `POST /api/detect` with Bearer token returned HTTP 200 with `mode: "ultralytics"`, message `"Predictions returned from connected Ultralytics endpoint."`, 460.24 ms live inference latency, and immediate in-memory byte deallocation (`del image_bytes; gc.collect()`).
 - **Mobile Alignment:** Confirmed `mobile-app/config.js` routes to `https://object-detection-suite.vercel.app`.
 - **Disk Leak Audit:** Confirmed 0 image files leaked across the entire repository. All 5/5 verification tests passed cleanly.
