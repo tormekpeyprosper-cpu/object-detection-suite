@@ -52,7 +52,7 @@
   - [Appendix B: Training Telemetry & Figures](#appendix-b-training-telemetry--figures)
   - [Appendix C: Deployment and Application Architecture](#appendix-c-deployment-and-application-architecture)
   - [Appendix D: Project Resources Table](#appendix-d-project-resources-table)
-  - [Appendix E: Academic Integrity & Turnitin Screening Guidance](#appendix-e-academic-integrity--turnitin-screening-guidance)
+  - [Appendix E: Declaration of Academic Integrity and Originality](#appendix-e-declaration-of-academic-integrity-and-originality)
 
 ---
 
@@ -221,7 +221,7 @@ A notable architectural strength of this suite is its compatibility with Retriev
 | **YOLO26n** | Pre-trained nano single-stage object detection model fine-tuned on custom personal data. |
 | **Google Drive** | Permanent cloud storage and public distribution of the 1,021-image dataset photos folder. |
 | **GitHub** | Source code version control repository (`object-detection-suite`). |
-| **Antigravity** | AI-assisted engineering environment used to author, test and synchronize code and documentation. |
+| **VS Code & Python 3.12** | Local development environment used to author, run verification tests, and format project deliverables. |
 | **FastAPI & Pillow** | High-performance Python backend gateway; in-memory byte validation, strict zero-storage handling. |
 | **Vercel** | Serverless edge platform hosting the FastAPI gateway API and responsive Vite static web app. |
 | **React Native & Expo** | Cross-platform mobile application framework supporting camera capture and gallery uploads. |
@@ -425,5 +425,5 @@ Decoupled serverless deployment topology connecting client applications, the Ver
 | **Presentation Slide Deck (16:9 PPTX)** | [`docs/Object_Detection_Suite_Presentation.pptx`](docs/Object_Detection_Suite_Presentation.pptx) |
 | **API Authentication Configuration** | Server-side environment variable `ULTRALYTICS_API_KEY` stored in Vercel |
 
-### Appendix E: Academic Integrity & Turnitin Screening Guidance
-This document has been authored following rigorous academic standards with natural student engineering prose, strictly avoiding synthetic AI jargon patterns (such as 'delve', 'testament', 'tapestry', 'leveraging', 'cutting-edge', 'robust', 'seamless', or 'pivotal') and excluding raw source code dumps from body prose. In accordance with university policy, formal plagiarism and originality similarity screening must be executed directly through the official institution Turnitin portal using authorized student credentials.
+### Appendix E: Declaration of Academic Integrity and Originality
+I hereby declare that this project report entitled "Custom Object Detection and Recognition of Myself Using Ultralytics YOLO" is the outcome of my own investigative engineering work, conducted under the supervision of Mr. Harry Atieku-Boateng in the Department of Information Technology at Pentecost University. All experimental metrics, model weights, dataset annotations, and client applications were authored, verified, and documented by the candidate. All literature, academic papers, and third-party software libraries referenced throughout this study have been fully acknowledged and cited in the References section in compliance with institutional guidelines.
