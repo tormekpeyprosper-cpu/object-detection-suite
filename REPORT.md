@@ -58,9 +58,9 @@
 
 ## Abstract
 
-This report presents the design, training, quantitative evaluation and cloud deployment of a custom object detection system engineered to detect and recognise the author, Tormekpey Ian Prosper, in personal and operational photographs. The vision system uses the Ultralytics YOLO26n architecture, fine-tuned on an authentic dataset of 1,021 annotated smartphone images. To ensure real-world robustness, the collection features varied lighting conditions, partial physical occlusions, distance variations and group settings containing up to eight people. People other than the author were left unannotated so the model learns negative sampling—detecting the author while suppressing background candidates.
+In this project, I developed, trained, and deployed a custom object detection system designed specifically to detect and recognize me in everyday photographs. Conventional computer vision models typically identify any human simply as a generic 'person', which is inadequate for personalized applications like automated lecture attendance, gym coaching, or campus lab security where identifying the exact individual is essential. To solve this, I built an authentic dataset of 1,021 personal photos taken with my smartphone across varied environments, including student rooms, campus corridors, bright outdoor sunlight, and crowded group pictures with up to eight classmates. I used a negative-sampling annotation strategy where I labeled only myself as Class 0 and left my peers unannotated, forcing the network to penalize false alarms on other faces and bodies.
 
-Two iterative training runs were conducted and benchmarked. The baseline run ('exp', 945 images, YOLOv8n) achieved a precision of 90.8%, recall of 78.6%, mAP50 of 80.5% and mAP50-95 of 31.7%. The final production run ('exp-2', 1,021 images, YOLO26n), trained on an enterprise NVIDIA RTX PRO 6000 Blackwell GPU, achieved 91.7% precision, 80.0% recall, 80.4% mAP50 and 34.9% mAP50-95, delivering a +3.2% gain in bounding box tightness. The model was deployed to a dedicated Ultralytics Cloud Run container in europe-southwest1, interfaced via a serverless FastAPI gateway on Vercel enforcing strict zero-storage in-memory processing (`del image_bytes; gc.collect()`), and accessed through an HTML5 Canvas web application and an Expo React Native mobile application. All 1,021 raw photographs are permanently preserved in a public Google Drive repository.
+I trained a lightweight YOLO26n model on an NVIDIA RTX PRO 6000 GPU for 100 epochs, reaching a peak precision of 91.7%, a recall of 80.0%, and an mAP50 of 80.4% (with mAP50-95 improving by +3.2 percentage points over my initial 945-image baseline). The model is served through a dedicated Google Cloud Run container in europe-southwest1 and connected to a serverless FastAPI gateway on Vercel. Because user privacy is critical, the backend processes images strictly in volatile memory and immediately clears buffers using garbage collection, writing zero images to disk. I also built a web interface with an HTML5 canvas overlay and a cross-platform React Native mobile app with an installable Android APK, providing instant open access without login barriers. All 1,021 original dataset photos are accessible in a public Google Drive repository.
 
 ---
 
@@ -119,9 +119,9 @@ Two iterative training runs were conducted and benchmarked. The baseline run ('e
 ## 1. Introduction
 
 ### 1.1 Background and Problem Statement
-Object detection is the computer vision discipline tasked with localising and classifying visual concepts within digital imagery. Generic computer vision models trained on public benchmarks such as Microsoft COCO [3] reliably locate generic 'person' bounding boxes, yet they assign every individual the identical label. Practical operational workflows—such as automated student attendance tracking, restricted laboratory access, personal security logging and customized coaching—require machine learning models capable of identifying a specific individual.
+Computer vision systems play a huge role in modern automation, from industrial robotics to smart city monitoring. However, most pre-trained models—such as detectors trained on the Microsoft COCO benchmark dataset—are trained on general object categories. When an individual steps into the camera view, these models simply output a bounding box labeled 'person'. While this is fine for traffic counting or pedestrian avoidance, it does not work for applications that need to identify a specific person, such as student attendance tracking in lecture halls, access control for private research labs, or personalized sports performance analysis.
 
-The engineering problem addressed in this work is: how can an accurate single-person object detector be trained from a modest collection of authentic smartphone photographs, avoiding false recognitions in group scenes of 1 to 8 individuals, and be served to web and mobile clients through a secure, instant-access architecture that guarantees zero image bytes are stored on disk? The primary challenges stem from training dataset constraints, illumination variations, and the imperative to eliminate surveillance risks through strict zero-storage memory handling.
+The engineering problem I tackled in this work was how to train a high-precision single-person detector using an everyday collection of 1,021 smartphone photos without causing false positive alerts on friends standing beside me, and how to deliver sub-second inference to web and mobile apps while guaranteeing that no uploaded user photos are ever saved to disk. Tackling this required solving three key issues: limited personal training data, heavy backlighting and shadow variations on campus, and strict privacy protection against server-side data retention.
 
 ### 1.2 Aim and Objectives
 The overarching aim of this project is to train, evaluate and deploy an open-access, cross-platform YOLO26n object detection suite capable of recognizing the author, Tormekpey Ian Prosper, in real-world photographs. The specific objectives were to:
@@ -147,18 +147,18 @@ The remainder of this report is organized as follows: Chapter 2 reviews the theo
 ## 2. Theoretical Background
 
 ### 2.1 Object Detection and YOLO
-Early computer vision pipelines relied upon handcrafted visual descriptors such as Haar cascades, Histogram of Oriented Gradients (HOG), and Scale-Invariant Feature Transforms (SIFT). While computationally tractable, these classical pipelines exhibited acute fragility when exposed to lighting fluctuations, oblique angles, or motion blur. Convolutional neural networks (CNNs) superseded these approaches by learning feature hierarchies directly from training pixels.
+Before deep learning became the standard, object detection relied on handcrafted mathematical features like Haar cascades, Histograms of Oriented Gradients (HOG), and Scale-Invariant Feature Transforms (SIFT). While those methods worked well in tightly controlled lab lighting, they broke down quickly when tested outdoors under changing shadows, oblique viewing angles, or camera motion blur. Modern deep convolutional networks solved this by learning spatial features directly from raw image pixels during training.
 
-Modern neural object detectors belong to one of two structural paradigms: two-stage detectors or one-stage detectors. Table 1 summarizes the core differences between these paradigms.
+Today, neural object detectors are generally divided into two main categories: two-stage detectors and one-stage detectors, as outlined in Table 1:
 
 *Table 1: Two-stage and one-stage object detectors*
 
 | Type | Examples | Method | Suitability for this project |
 | :--- | :--- | :--- | :--- |
-| **Two-stage** | R-CNN family, Fast R-CNN, Faster R-CNN [4] | Proposes candidate regions of interest first, then extracts features and classifies each region separately. | Highly accurate but computationally heavy; high latency unsuitable for real-time mobile scanning. |
-| **One-stage** | SSD, RetinaNet, YOLO family [1], YOLO26n | Frames detection as a single regression problem, predicting bounding boxes and class probabilities in a single forward pass. | Extremely fast, lightweight parameter footprint; ideal for real-time web and mobile deployment. |
+| **Two-stage** | R-CNN family, Fast R-CNN, Faster R-CNN | Proposes candidate regions of interest first, then extracts features and classifies each region separately. | Highly accurate but computationally heavy; high latency unsuitable for real-time mobile scanning. |
+| **One-stage** | SSD, RetinaNet, YOLO family, YOLO26n | Frames detection as a single regression problem, predicting bounding boxes and class probabilities in a single forward pass. | Extremely fast, lightweight parameter footprint; ideal for real-time web and mobile deployment. |
 
-Ultralytics YOLO26n was selected for this study. As a nano architecture, it delivers state-of-the-art mean Average Precision while maintaining a modest 5.54 MB checkpoint footprint, allowing rapid containerized dispatch over HTTPS.
+For this project, I chose Ultralytics YOLO26n. As a nano architecture, it delivers strong mean Average Precision with an exceptionally compact parameter footprint. Its 5.54 MB weights file fits easily within cloud container memory and enables inference times under 600 milliseconds, making it ideal for mobile and web delivery.
 
 ### 2.2 Evaluation Metrics & Mathematical Formulations
 To evaluate model detection quality objectively, five standard statistical and information retrieval formulations are applied:
@@ -381,18 +381,18 @@ This project successfully demonstrated the end-to-end engineering of a custom ob
 
 ## References
 
-[1] J. Redmon, S. Divvala, R. Girshick, and A. Farhadi, "You Only Look Once: Unified, Real-Time Object Detection," in *Proc. IEEE Conf. Computer Vision and Pattern Recognition (CVPR)*, 2016, pp. 779–788.  
-[2] Ultralytics Inc., "Ultralytics YOLO26 Architecture and Deployment Documentation," 2026. [Online]. Available: https://docs.ultralytics.com  
-[3] T.-Y. Lin et al., "Microsoft COCO: Common Objects in Context," in *Proc. European Conf. Computer Vision (ECCV)*, 2014, pp. 740–755.  
-[4] S. Ren, K. He, R. Girshick, and J. Sun, "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks," *IEEE Trans. Pattern Analysis and Machine Intelligence*, vol. 39, no. 6, pp. 1137–1149, 2017.  
-[5] S. Ramírez, "FastAPI: High performance, easy to learn, fast to code, ready for production," 2024. [Online]. Available: https://fastapi.tiangolo.com  
-[6] Vercel Inc., "Vercel Serverless Functions and Edge Network Architecture," 2024. [Online]. Available: https://vercel.com/docs  
-[7] Meta Platforms Inc. and Expo Project, "React Native and Expo Application Services Documentation," 2024. [Online]. Available: https://reactnative.dev and https://docs.expo.dev  
-[8] A. Clark and contributors, "Pillow (PIL Fork) Documentation," 2024. [Online]. Available: https://python-pillow.org  
-[9] D. Apaak, "Factors influencing sports talent development in senior high schools in the Upper East Region of Ghana," *Afr. J. Teacher Educ.*, vol. 13, no. 2, Sep. 2024.  
-[10] G. Bradski, "The OpenCV Library," *Dr. Dobb's Journal of Software Tools*, 2000.  
-[11] C. Lugaresi et al., "MediaPipe: A framework for building perception pipelines," *arXiv:1906.08172*, 2019.  
-[12] Z. Cao et al., "OpenPose: Realtime multi-person 2D pose estimation using part affinity fields," *IEEE Trans. Pattern Anal. Mach. Intell.*, vol. 43, no. 1, pp. 172–186, 2021.  
+- Redmon, J., Divvala, S., Girshick, R., and Farhadi, A., "You Only Look Once: Unified, Real-Time Object Detection," in *Proc. IEEE Conf. Computer Vision and Pattern Recognition (CVPR)*, pp. 779–788, 2016.  
+- Ultralytics Inc., "Ultralytics YOLO26 Architecture and Deployment Documentation," 2026. Available: https://docs.ultralytics.com  
+- Lin, T.-Y. et al., "Microsoft COCO: Common Objects in Context," in *Proc. European Conf. Computer Vision (ECCV)*, pp. 740–755, 2014.  
+- Ren, S., He, K., Girshick, R., and Sun, J., "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks," *IEEE Trans. Pattern Analysis and Machine Intelligence*, vol. 39, no. 6, pp. 1137–1149, 2017.  
+- Ramírez, S., "FastAPI Framework Documentation," 2024. Available: https://fastapi.tiangolo.com  
+- Vercel Inc., "Vercel Serverless Functions and Edge Network Architecture," 2024. Available: https://vercel.com/docs  
+- Meta Platforms Inc. and Expo Project, "React Native and Expo Application Services Documentation," 2024. Available: https://reactnative.dev and https://docs.expo.dev  
+- Clark, A. and contributors, "Pillow (PIL Fork) Imaging Library Documentation," 2024. Available: https://python-pillow.org  
+- Apaak, D., "Factors influencing sports talent development in senior high schools in the Upper East Region of Ghana," *African Journal of Teacher Education*, vol. 13, no. 2, 2024.  
+- Bradski, G., "The OpenCV Library," *Dr. Dobb's Journal of Software Tools*, 2000.  
+- Lugaresi, C. et al., "MediaPipe: A framework for building perception pipelines," *arXiv preprint arXiv:1906.08172*, 2019.  
+- Cao, Z. et al., "OpenPose: Realtime multi-person 2D pose estimation using part affinity fields," *IEEE Trans. Pattern Anal. Mach. Intell.*, vol. 43, no. 1, pp. 172–186, 2021.  
 
 ---
 
