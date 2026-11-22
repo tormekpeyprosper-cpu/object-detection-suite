@@ -20,6 +20,7 @@ object-detection-suite/
 ├── docs/                     # Documentation and Training Artifacts
 │   ├── Project_Report_Object_Detection_Suite.docx # Complete formal evaluation report (Times New Roman, 16 pt, IEEE)
 │   ├── Project_Explanation_and_Defense_Guide.docx # Plain-English viva & presentation guide (Times New Roman, 16 pt, IEEE)
+│   ├── Object_Detection_Suite_Presentation.pptx   # 14-slide widescreen presentation deck with embedded graphs & notes
 │   └── graphs/               # Generated evaluation plots, weights, and telemetry
 │       ├── results.png       # 100-epoch training and validation curves
 │       ├── PR_curve.png      # Precision-Recall curve (80.4% mAP@50)
@@ -66,6 +67,8 @@ The system is deployed and fully verified live:
 - **Detection Endpoint:** `https://object-detection-suite.vercel.app/api/detect`
 - **GitHub Repository:** [https://github.com/tormekpeyprosper-cpu/object-detection-suite](https://github.com/tormekpeyprosper-cpu/object-detection-suite)
 - **Inference Service:** Dedicated Ultralytics Cloud Run container in Europe Southwest (`europe-southwest1`).
+- **Google Drive Dataset (1,021 Photos):** [https://drive.google.com/drive/folders/1ARy1CuAKU0G6YdFLEGivOJGJ0VmC_hNm?usp=sharing](https://drive.google.com/drive/folders/1ARy1CuAKU0G6YdFLEGivOJGJ0VmC_hNm?usp=sharing)
+- **PowerPoint Presentation Deck:** [`docs/Object_Detection_Suite_Presentation.pptx`](docs/Object_Detection_Suite_Presentation.pptx)
 
 ---
 
@@ -80,6 +83,29 @@ The production model was trained using the state-of-the-art **YOLO26 Nano (`yolo
 | **Recall (R)** | **78.6%** | **80.0%** | **+1.4%** |
 | **mAP@0.50** | **80.5%** | **80.4%** | **-0.1%** |
 | **mAP@0.50:0.95** | **31.7%** | **34.9%** | **+3.2%** |
+
+### 📐 Evaluation Metrics & Mathematical Formulations
+- **Precision ($P$):** $\frac{TP}{TP + FP} = 91.7\%$ (minimizes spurious false alerts on background objects)
+- **Recall ($R$):** $\frac{TP}{TP + FN} = 80.0\%$ (ensures 4 of 5 target objects are detected under motion blur/occlusion)
+- **Accuracy:** $\frac{TP + TN}{TP + TN + FP + FN}$ (overall proportion of correct spatial decisions)
+- **F1-Score ($F_1$):** $2 \cdot \frac{P \cdot R}{P + R} = 0.854$ (harmonic mean; peak value of **0.857** achieved at confidence threshold $0.61$)
+- **PR-AUC (mAP@50):** **80.4%** (integral area under the Precision-Recall curve at IoU 0.50)
+- **PR-AUC vs. ROC-AUC in Vision:** ROC curves evaluate True Positive Rate against False Positive Rate ($FPR = \frac{FP}{FP + TN}$). In dense object detection grids, true background negatives ($TN$) number in the tens of thousands per image, which artificially suppresses FPR ($FPR \approx 0$) and inflates ROC-AUC ($> 0.98$). Precision-Recall AUC (mAP) evaluates positive candidate boxes directly without distortion, serving as the true computer vision standard.
+
+### 📐 Coordinate Calculations & Cross-Platform Rendering
+1. **YOLO Normalized Format:** $\text{box} = [x_{\text{center}}, y_{\text{center}}, w, h]$ normalized to $[0.0, 1.0]$.
+2. **Absolute Pixel Conversion:**
+   $$x_{\text{min}} = (x_{\text{center}} - w/2) \cdot W_{\text{img}}, \quad y_{\text{min}} = (y_{\text{center}} - h/2) \cdot H_{\text{img}}$$
+   $$\text{box\_width} = w \cdot W_{\text{img}}, \quad \text{box\_height} = h \cdot H_{\text{img}}$$
+3. **NMS Filtering:** Candidates filtered at $\text{IoU} = 0.50$ where $\text{IoU} = \frac{\text{Area}(A \cap B)}{\text{Area}(A \cup B)}$.
+4. **Web HTML5 Canvas:** Rendered via `ctx.strokeRect(x, y, w, h)` with canvas-to-image scaling ratios $s_x = W_{\text{canvas}}/W_{\text{img}}$ and $s_y = H_{\text{canvas}}/H_{\text{img}}$.
+5. **Mobile Viewport Scaling:** Rendered in React Native with uniform isotropic scaling $s = \min(W_{\text{viewport}}/W_{\text{img}}, H_{\text{viewport}}/H_{\text{img}})$ and centering offsets $(dx, dy)$ to prevent aspect ratio distortion.
+
+### 🧠 Retrieval-Augmented Generation (RAG) Architecture
+The vision suite seamlessly bridges stateless visual detection with semantic intelligence:
+- **Stateless Vision Inference:** In-memory zero-storage YOLO26n inference detects objects and yields class tokens and confidence scores.
+- **Dynamic Retrieval Layer:** Detected labels query an external vector knowledge store (e.g., Supabase pgvector or Google Knowledge Catalog) via cosine similarity.
+- **Domain Augmentation Without Retraining:** Returns real-time athlete drill guides, safety checklists, or equipment manuals dynamically without expensive model fine-tuning, while zero client images are ever stored.
 
 ---
 
@@ -193,6 +219,8 @@ Performs object detection on an uploaded image with open public access:
 
 - **Formal Report Document:** [`docs/Project_Report_Object_Detection_Suite.docx`](docs/Project_Report_Object_Detection_Suite.docx) (Times New Roman, 16 pt, IEEE)
 - **Viva & Defense Guide:** [`docs/Project_Explanation_and_Defense_Guide.docx`](docs/Project_Explanation_and_Defense_Guide.docx) (Times New Roman, 16 pt, IEEE)
+- **PowerPoint Presentation Deck:** [`docs/Object_Detection_Suite_Presentation.pptx`](docs/Object_Detection_Suite_Presentation.pptx) (14-slide 16:9 presentation with embedded graphs & speaker notes)
+- **Google Drive Dataset Repository:** [https://drive.google.com/drive/folders/1ARy1CuAKU0G6YdFLEGivOJGJ0VmC_hNm?usp=sharing](https://drive.google.com/drive/folders/1ARy1CuAKU0G6YdFLEGivOJGJ0VmC_hNm?usp=sharing) (1,021 raw photos, 103.37 MB)
 - **Full Markdown Report:** [`REPORT.md`](./REPORT.md)
-- **Trained Model Weights:** [`docs/graphs/exp-2.pt`](docs/graphs/exp-2.pt)
-- **Training CSV Telemetry:** [`docs/graphs/results.csv`](docs/graphs/results.csv)
+- **Trained Model Weights:** [`docs/graphs/exp-2.pt`](docs/graphs/exp-2.pt) (5.54 MB PyTorch checkpoint)
+- **Training CSV Telemetry:** [`docs/graphs/results.csv`](docs/graphs/results.csv) (101 epochs)
