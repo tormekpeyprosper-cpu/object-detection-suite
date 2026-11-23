@@ -24,7 +24,7 @@ object-detection-suite/
 │   ├── .env                  # Live environment variables (Ultralytics & Supabase)
 │   └── .env.example          # Environment variable template
 ├── docs/                     # Documentation and Training Artifacts (Times New Roman 16 pt)
-│   ├── Project_Report_Object_Detection_Suite.docx # Formal project report (Chapters 1–9, Tables 0–6)
+│   ├── Project_Report_Object_Detection_Suite.docx # Formal project report (Chapters 1-9, Tables 0-6)
 │   ├── Project_Explanation_and_Defense_Guide.docx # Viva defense guide (Q&A, talking points, checklist)
 │   ├── Object_Detection_Suite_Presentation.pptx   # 17-slide 16:9 presentation deck with embedded figures & notes
 │   └── graphs/               # Generated evaluation plots, weights, and telemetry
@@ -52,7 +52,7 @@ object-detection-suite/
 │   └── package.json          # React Native and Expo dependencies
 ├── smoke_test_production.py  # Automated production verification test suite (5/5 passes)
 ├── vercel.json               # Vercel deployment routing (FastAPI + Vite static)
-├── REPORT.md                 # Complete formal evaluation & deployment report (Chapters 1–9)
+├── REPORT.md                 # Complete formal evaluation & deployment report (Chapters 1-9)
 └── README.md                 # Project documentation & run commands
 ```
 
@@ -225,7 +225,7 @@ Performs object detection on an uploaded image with open public access:
 
 ## 📄 Formal Documentation & Checkpoints
 
-- **Formal Report Document:** [`docs/Project_Report_Object_Detection_Suite.docx`](docs/Project_Report_Object_Detection_Suite.docx) (Modeled on Isaac's Report, Chapters 1–9, Tables 0–6, **Times New Roman, 16 pt**, IEEE)
+- **Formal Report Document:** [`docs/Project_Report_Object_Detection_Suite.docx`](docs/Project_Report_Object_Detection_Suite.docx) (Modeled on Isaac's Report, Chapters 1-9, Tables 0-6, **Times New Roman, 16 pt**, IEEE)
 - **Viva & Defense Guide:** [`docs/Project_Explanation_and_Defense_Guide.docx`](docs/Project_Explanation_and_Defense_Guide.docx) (Modeled on Isaac's Report, **Times New Roman, 16 pt**, IEEE)
 - **PowerPoint Presentation Deck:** [`docs/Object_Detection_Suite_Presentation.pptx`](docs/Object_Detection_Suite_Presentation.pptx) (17-slide 16:9 presentation with embedded graphs & speaker notes)
 - **Google Drive Dataset Repository:** [https://drive.google.com/drive/folders/1ARy1CuAKU0G6YdFLEGivOJGJ0VmC_hNm?usp=sharing](https://drive.google.com/drive/folders/1ARy1CuAKU0G6YdFLEGivOJGJ0VmC_hNm?usp=sharing) (1,021 raw photos, 103.37 MB)

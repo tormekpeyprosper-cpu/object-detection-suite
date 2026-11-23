@@ -62,9 +62,9 @@
 
 Most object detection models are designed to pick out general objects. For example, if you use a standard YOLO model trained on the COCO dataset, and point a camera at me, it will simply label me as 'person.' That's fine for basic tasks like counting people at a turnstile. But it's not enough if you want to take attendance in a lecture room at Pentecost University or keep track of who enters the engineering lab. In these scenarios, the software needs to recognize me as an individual: Tormekpey Ian Prosper.
 
-To solve this, I built my own dataset from scratch. I spent several days walking around campus with my phone, snapping 1,021 photos in all sorts of places: dorm rooms, out in the bright midday sun, dim corridors, and even group shots with up to eight people. Labeling these photos was hard work. In the group pictures, I made sure to only draw boxes around myself—everyone else was left unboxed as class 0 negatives. That way, if the model ever mistook a friend for me, the loss function would catch it.
+To solve this, I built my own dataset from scratch. I spent several days walking around campus with my phone, snapping 1,021 photos in all sorts of places: dorm rooms, out in the bright midday sun, dim corridors, and even group shots with up to eight people. Labeling these photos was hard work. In the group pictures, I made sure to only draw boxes around myself. Everyone else was left unboxed as class 0 negatives. That way, if the model ever mistook a friend for me, the loss function would catch it.
 
-Once the dataset was ready, I fine-tuned a YOLO26n nano model using cloud computing for 100 epochs. Training took just under six minutes, and the final model achieved 91.7% precision, 80.0% recall, 80.4% mAP@50, and 34.9% mAP@50-95. That’s a 3.2 percentage point improvement over my previous baseline with 945 images. The model’s weights file is only 5.54MB. I deployed it on Google Cloud Run in the europe-southwest1 region, with a serverless FastAPI proxy on Vercel to handle requests. I was careful not to store any user photos on the server—images are loaded into RAM for inference and deleted immediately after. The system is now available as an HTML5 web page and a React Native Android app. All 1,021 original photos are safely kept in a shared Google Drive folder.
+Once the dataset was ready, I fine-tuned a YOLO26n nano model using cloud computing for 100 epochs. Training took just under six minutes, and the final model achieved 91.7% precision, 80.0% recall, 80.4% mAP@50, and 34.9% mAP@50-95. That’s a 3.2 percentage point improvement over my previous baseline with 945 images. The model’s weights file is only 5.54MB. I deployed it on Google Cloud Run in the europe-southwest1 region, with a serverless FastAPI proxy on Vercel to handle requests. I was careful not to store any user photos on the server. Images are loaded into RAM for inference and deleted immediately after. The system is now available as an HTML5 web page and a React Native Android app. All 1,021 original photos are safely kept in a shared Google Drive folder.
 
 ---
 
@@ -127,7 +127,7 @@ Once the dataset was ready, I fine-tuned a YOLO26n nano model using cloud comput
 
 Most vision models out there see everyone as just a 'person.' If you use a model trained on COCO, it puts 'person' on anyone passing by the camera. That’s good enough for things like people counting or basic security. But it completely fails when you actually need to know who someone is. Just knowing there’s a person present won’t help when you’re checking attendance in my department or controlling access to a secure lab. The software needs to recognize individuals, not just people in general.
 
-That was the challenge I set out to tackle. I wanted to see if a regular student, with no fancy hardware, could train a model to spot one specific person—me—using just 1,021 phone photos and make it work on campus. It wasn’t easy. The lighting on campus is unpredictable: faces get washed out in the sun, and hostel rooms are often too dark. People are usually in groups, too, so I needed to capture enough variety in my photos to prevent the model from flagging my classmates by mistake. I also had to keep inference fast and make sure any uploaded photos were never stored.
+That was the challenge I set out to tackle. I wanted to see if a regular student, with no fancy hardware, could train a model to spot one specific person, me, using just 1,021 phone photos and make it work on campus. It wasn’t easy. The lighting on campus is unpredictable: faces get washed out in the sun, and hostel rooms are often too dark. People are usually in groups, too, so I needed to capture enough variety in my photos to prevent the model from flagging my classmates by mistake. I also had to keep inference fast and make sure any uploaded photos were never stored.
 
 ---
 
@@ -147,13 +147,13 @@ My main goal for this capstone was to train, test, and deliver a YOLO26n system 
 
 ### 1.3 Scope and Limitations
 
-In this report, I walk through the entire process: taking photos, labeling boxes, tuning model weights, tracking loss curves, writing backend proxies, and building the frontend apps. The model’s sole job was to find me in photos. There were some real limitations—I needed a constant internet connection since inference only runs in the cloud, and Vercel would reject any image uploads over 4.5MB. Also, because I used just one camera, the model only sees in 2D and can’t calculate real-world depth.
+In this report, I walk through the entire process: taking photos, labeling boxes, tuning model weights, tracking loss curves, writing backend proxies, and building the frontend apps. The model’s sole job was to find me in photos. There were some real limitations. I needed a constant internet connection since inference only runs in the cloud, and Vercel would reject any image uploads over 4.5MB. Also, because I used just one camera, the model only sees in 2D and can’t calculate real-world depth.
 
 ---
 
 ### 1.4 Significance of the Study
 
-Through this project, I learned that you don’t need a high-end, expensive GPU setup to create real-world computer vision systems. With transfer learning and just over a thousand carefully chosen images, cloud computing makes strong accuracy possible. I also realized how important privacy is—my serverless gateway proved it’s possible to process images without ever saving them. Everything happens in memory and is deleted right after, so user privacy is protected.
+Through this project, I learned that you don’t need a high-end, expensive GPU setup to create real-world computer vision systems. With transfer learning and just over a thousand carefully chosen images, cloud computing makes strong accuracy possible. I also realized how important privacy is. My serverless gateway proved it’s possible to process images without ever saving them. Everything happens in memory and is deleted right after, so user privacy is protected.
 
 ---
 
@@ -419,8 +419,8 @@ This project showed that I can train and deploy a real-world object detection sy
 
 [1] J. Redmon, S. Divvala, R. Girshick and A. Farhadi, "You Only Look Once: Unified, Real-Time Object Detection", in Proc. IEEE Conf. on Computer Vision and Pattern Recognition (CVPR), 2016, pp. 779-788.  
 [2] Ultralytics Inc., "Ultralytics YOLO26 Architecture and Deployment Documentation," 2026. [Online]. Available: https://docs.ultralytics.com  
-[3] T.-Y. Lin et al., "Microsoft COCO: Common Objects in Context", in Proc. European Conf. Computer Vision (ECCV), 2014, pp. 740–755.  
-[4] S. Ren, K. He, R. Girshick and J. Sun, "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks", IEEE Trans. Pattern Analysis and Machine Intelligence, vol. 39, no. 6, pp. 1137–1149, 2017.  
+[3] T.-Y. Lin et al., "Microsoft COCO: Common Objects in Context", in Proc. European Conf. Computer Vision (ECCV), 2014, pp. 740-755.  
+[4] S. Ren, K. He, R. Girshick and J. Sun, "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks", IEEE Trans. Pattern Analysis and Machine Intelligence, vol. 39, no. 6, pp. 1137-1149, 2017.  
 [5] S. Ramírez, "FastAPI: High performance, easy to learn, fast to code, ready for production," 2024. [Online]. Available: https://fastapi.tiangolo.com  
 [6] Vercel Inc., "Vercel Serverless Functions and Edge Network Architecture," 2024. [Online]. Available: https://vercel.com/docs  
 [7] Meta Platforms Inc. and Expo Project, 'React Native and Expo Application Services Documentation', 2024. [Online]. Available: https://reactnative.dev and https://docs.expo.dev  
@@ -428,7 +428,7 @@ This project showed that I can train and deploy a real-world object detection sy
 [9] D. Apaak, "Factors influencing sports talent development in senior high schools in the Upper East Region of Ghana", African Journal of Teacher Education, vol. 13, no. 2, 2024.  
 [10] G. Bradski, "The OpenCV Library", Dr. Dobb's Journal of Software Tools, 2000.  
 [11] C. Lugaresi et al., "MediaPipe: A framework for building perception pipelines," arXiv preprint arXiv:1906.08172, 2019.  
-[12] Z. Cao et al., "OpenPose: Realtime multi-person 2D pose estimation using part affinity fields," IEEE Trans. Pattern Anal. Mach. Intell., vol. 43, no. 1, pp. 172–186, 2021.  
+[12] Z. Cao et al., "OpenPose: Realtime multi-person 2D pose estimation using part affinity fields," IEEE Trans. Pattern Anal. Mach. Intell., vol. 43, no. 1, pp. 172-186, 2021.  
 
 ---
 
