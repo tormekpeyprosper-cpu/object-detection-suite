@@ -8,6 +8,7 @@
 **Supervisor / Lecturer:** Mr. Harry Atieku-Boateng  
 **Submission Date:** 23 November 2026  
 
+
 ---
 
 ## Table of Contents
@@ -54,6 +55,7 @@
   - [Appendix D: Project Resources Table](#appendix-d-project-resources-table)
   - [Appendix E: Declaration of Academic Integrity and Originality](#appendix-e-declaration-of-academic-integrity-and-originality)
 
+
 ---
 
 ## Abstract
@@ -62,38 +64,38 @@ Most object detection models are designed to pick out general objects. For examp
 
 To solve this, I built my own dataset from scratch. I spent several days walking around campus with my phone, snapping 1,021 photos in all sorts of places: dorm rooms, out in the bright midday sun, dim corridors, and even group shots with up to eight people. Labeling these photos was hard work. In the group pictures, I made sure to only draw boxes around myself—everyone else was left unboxed as class 0 negatives. That way, if the model ever mistook a friend for me, the loss function would catch it.
 
-Once the dataset was ready, I fine-tuned a YOLO26n nano model using cloud computing for 100 epochs. Training took just under six minutes (340.6 seconds), and the final model achieved 91.7% precision, 80.0% recall, 80.4% mAP@50, and 34.9% mAP@50-95. That’s a 3.2 percentage point improvement over my previous baseline with 945 images. The model’s weights file is only 5.54MB. I deployed it on Google Cloud Run in the europe-southwest1 region, with a serverless FastAPI proxy on Vercel to handle requests. I was careful not to store any user photos on the server—images are loaded into RAM for inference and deleted immediately after. The system is now available as an HTML5 web page and a React Native Android app. All 1,021 original photos are safely kept in a shared Google Drive folder.
+Once the dataset was ready, I fine-tuned a YOLO26n nano model using cloud computing for 100 epochs. Training took just under six minutes, and the final model achieved 91.7% precision, 80.0% recall, 80.4% mAP@50, and 34.9% mAP@50-95. That’s a 3.2 percentage point improvement over my previous baseline with 945 images. The model’s weights file is only 5.54MB. I deployed it on Google Cloud Run in the europe-southwest1 region, with a serverless FastAPI proxy on Vercel to handle requests. I was careful not to store any user photos on the server—images are loaded into RAM for inference and deleted immediately after. The system is now available as an HTML5 web page and a React Native Android app. All 1,021 original photos are safely kept in a shared Google Drive folder.
 
 ---
 
 ## List of Figures
 
-- **Figure 1:** 100-Epoch Training and Validation Metrics Dashboard (`results.png`)
-- **Figure 2:** Precision-Recall Curve Reaching mAP50 = 80.4% (`PR_curve.png`)
-- **Figure 3:** F1-Confidence Optimization Curve Peaking at 0.857 (`F1_curve.png`)
-- **Figure 4:** Confusion Matrix Raw Candidate Detection Counts (`confusion_matrix.png`)
-- **Figure 5:** Normalized Confusion Matrix Across Target Classes (`confusion_matrix_normalized.png`)
-- **Figure 6:** Authentic Operational Dataset Sample 1 (`docs/graphs/dataset_sample_1.jpg`)
-- **Figure 7:** Authentic Operational Dataset Sample 2 (`docs/graphs/dataset_sample_2.jpg`)
-- **Figure 8:** Decoupled Zero-Storage Client-Server Architecture
+- Figure 1: 100-Epoch Training and Validation Metrics Dashboard (results.png)........11
+- Figure 2: Precision-Recall Curve Reaching mAP50 = 80.4% (PR_curve.png).........12
+- Figure 3: F1-Confidence Optimization Curve Peaking at 0.857 (F1_curve.png)........12
+- Figure 4: Confusion Matrix Raw Candidate Detection Counts (confusion_matrix.png)..13
+- Figure 5: Normalized Confusion Matrix Across Target Classes (confusion_matrix_normalized.png)......13
+- Figure 6: Authentic Operational Dataset Sample 1 (docs/graphs/dataset_sample_1.jpg).19
+- Figure 7: Authentic Operational Dataset Sample 2 (docs/graphs/dataset_sample_2.jpg).19
+- Figure 8: Decoupled Zero-Storage Client-Server Architecture......................21
 
 ---
 
 ## List of Tables
 
-- **Table 0:** List of Abbreviations
-- **Table 1:** Two-Stage and One-Stage Object Detectors
-- **Table 2:** Tools and Technologies Used Across the System
-- **Table 3:** Training Setup and Hyperparameters (exp-2)
-- **Table 4:** Quantitative Performance Comparison (Run 1 vs. Run 2)
-- **Table 5:** Field Test and Automated Verification Results
-- **Table 6:** Project Resources and Live Links
+- Table 0: List of Abbreviations..................................................v
+- Table 1: Two-Stage and One-Stage Object Detectors...............................3
+- Table 2: Tools and Technologies Used Across the System...........................7
+- Table 3: Training Setup and Hyperparameters (exp-2)..............................9
+- Table 4: Quantitative Performance Comparison (Run 1 vs. Run 2)...................10
+- Table 5: Field Test and Automated Verification Results............................15
+- Table 6: Project Resources and Live Links.......................................22
 
 ---
 
 ## List of Abbreviations
 
-*Table 0: List of Abbreviations*
+### Table 0: List of Abbreviations
 
 | Term | Meaning |
 | :--- | :--- |
@@ -116,96 +118,100 @@ Once the dataset was ready, I fine-tuned a YOLO26n nano model using cloud comput
 | **VRAM** | Video Random Access Memory (dedicated GPU memory) |
 | **YOLO** | You Only Look Once (single-stage unified object detection network) |
 
+
 ---
 
 ## 1. Introduction
 
 ### 1.1 Background and Problem Statement
-Most vision models out there see everyone as just a 'person.' If you use a model trained on COCO [3], it puts 'person' on anyone passing by the camera. That’s good enough for things like people counting or basic security. But it completely fails when you actually need to know who someone is. Just knowing there’s a person present won’t help when you’re checking attendance in my department or controlling access to a secure lab. The software needs to recognize individuals, not just people in general.
+
+Most vision models out there see everyone as just a 'person.' If you use a model trained on COCO, it puts 'person' on anyone passing by the camera. That’s good enough for things like people counting or basic security. But it completely fails when you actually need to know who someone is. Just knowing there’s a person present won’t help when you’re checking attendance in my department or controlling access to a secure lab. The software needs to recognize individuals, not just people in general.
 
 That was the challenge I set out to tackle. I wanted to see if a regular student, with no fancy hardware, could train a model to spot one specific person—me—using just 1,021 phone photos and make it work on campus. It wasn’t easy. The lighting on campus is unpredictable: faces get washed out in the sun, and hostel rooms are often too dark. People are usually in groups, too, so I needed to capture enough variety in my photos to prevent the model from flagging my classmates by mistake. I also had to keep inference fast and make sure any uploaded photos were never stored.
 
+---
+
 ### 1.2 Aim and Objectives
+
 My main goal for this capstone was to train, test, and deliver a YOLO26n system that could reliably detect me in real-world photos. Here’s how I approached it, step by step:
-1. **Dataset:** I collected and labelled 1,021 phone photos covering solo, backlit, cluttered and group situations with my classmates.
-2. **Training:** I fine tuned a YOLO26n nano on the cloud on GPUs and compared it against my 945 image baseline (Run 1 vs Run 2).
-3. **Evaluation:** Track precision, recall, mAP50, mAP50-95 and the F1-confidence curve.
-4. **Cloud Setup:** The model weights were hosted in a Google Cloud Run container via the Ultralytics platform.
-5. **Backend Gateway:** I built a serverless FastAPI proxy on Vercel with zero-storage RAM cleanup via Python's garbage collector.
-6. **Client Frontends:** A web canvas interface and an installable React Native Android APK (open access) was built.
-7. **Verification:** We ran an automated smoke test to check response times, uptime and ensure there are zero disk leaks.
+
+1. Dataset: I collected and labelled 1,021 phone photos covering solo, backlit, cluttered and group situations with my classmates.
+2. Training: I fine tuned a YOLO26n nano on the cloud on GPUs and compared it against my 945 image baseline (Run 1 vs Run 2).
+3. Evaluation: precision, recall, mAP50, mAP50-95 and the F1-confidence curve.
+4. Cloud Setup: The model weights were hosted in a Google Cloud Run container via the Ultralytics platform.
+5. Backend Gateway: I built a serverless FastAPI proxy on Vercel with zero-storage RAM cleanup via Python's garbage collector.
+6. Client Frontends: A web canvas interface and an installable React Native Android APK (open access) was built.
+7. Verification: we run an automated smoke test to check response times, uptime and ensure there are zero disk leaks.
+
+---
 
 ### 1.3 Scope and Limitations
+
 In this report, I walk through the entire process: taking photos, labeling boxes, tuning model weights, tracking loss curves, writing backend proxies, and building the frontend apps. The model’s sole job was to find me in photos. There were some real limitations—I needed a constant internet connection since inference only runs in the cloud, and Vercel would reject any image uploads over 4.5MB. Also, because I used just one camera, the model only sees in 2D and can’t calculate real-world depth.
 
-### 1.4 Significance of the Study
-Through this project, I learned that you don’t need a high-end, expensive GPU setup to create real-world computer vision systems. With transfer learning and just over a thousand carefully chosen images, cloud computing makes strong accuracy possible. I also realized how important privacy is—my serverless gateway proved it’s possible to process images without ever saving them. Everything happens in memory and is deleted right after, so user privacy is protected.
+---
 
-### 1.5 Report Organization
-The remainder of this report is organized as follows: Chapter 2 reviews the theoretical background of YOLO, evaluation formulas, coordinate mapping mathematics, and RAG architectures. Chapter 3 introduces the development tools and technologies used. Chapter 4 details data collection, annotation strategy, and training setup. Chapter 5 evaluates benchmark numbers, training curves, and confusion matrices. Chapter 6 describes cloud deployment, FastAPI gateway, and client apps. Chapter 7 documents real-world field tests and automated verification. Chapter 8 discusses engineering obstacles and practical lessons learned. Chapter 9 concludes the study and outlines future recommendations. IEEE references and project appendices conclude the document.
+### 1.4 Significance of the Study
+
+Through this project, I learned that you don’t need a high-end, expensive GPU setup to create real-world computer vision systems. With transfer learning and just over a thousand carefully chosen images, cloud computing makes strong accuracy possible. I also realized how important privacy is—my serverless gateway proved it’s possible to process images without ever saving them. Everything happens in memory and is deleted right after, so user privacy is protected.
 
 ---
 
 ## 2. Theoretical Background
 
 ### 2.1 Object Detection and YOLO
+
 Before deep learning, computer vision relied on manual feature extraction methods like Haar cascades, HOG, and SIFT. These methods were fragile and only worked well in controlled lab conditions with steady lighting. They often failed outdoors when lighting changed or the camera shook. Convolutional neural networks (CNNs) have replaced these methods because they learn features directly from raw image pixels during training.
 
 Modern neural detectors have split into two main designs: two stage and one stage detectors. Table 1 shows how they differ.
 
-*Table 1: Two-stage and one-stage object detectors*
+---
+
+### Table 1: Two-stage and one-stage object detectors
 
 | Detector Paradigm | Representative Architectures | Inference Methodology | Suitability for this Project |
 | :--- | :--- | :--- | :--- |
-| **Two-stage** | R-CNN family, Fast R-CNN, Faster R-CNN [4] | Proposes candidate regions of interest first, then extracts features and classifies each region separately. | Accurate on paper, but too heavy and slow for real-time phone scanning. |
-| **One-stage** | SSD, RetinaNet, YOLO family [1], YOLO26n [2] | Frames detection as a single regression pass, predicting bounding boxes and class probabilities all at once. | Fast and lightweight; small enough to run smoothly over mobile connections. |
+| **Two-stage** | R-CNN family, Fast R-CNN, Faster R-CNN [4] | Proposed candidate regions of interest first, then extracted features and classifies each region separately. | It is accurate on paper, but too heavy and slow for real-time phone scanning. |
+| **One-stage** | SSD, RetinaNet, YOLO family [1], YOLO26n [2] | Frames detection as single regression pass, predicting bounding boxes and class probabilities all at once. | Fast and lightweight; small enough to run smoothly over mobile connections. |
 
-I chose YOLO26n [2] because the weights file is only 5.54MB. It starts up quickly on cloud containers, fits within memory limits, and returns predictions in under 600ms.
+
+I chose YOLO26n because the weights file is only 5.54MB. It starts up quickly on cloud containers, fits within memory limits, and returns predictions in under 600ms.
+
+---
 
 ### 2.2 Evaluation Metrics & Mathematical Formulations
+
 I tracked five standard metrics to evaluate the model:
 
-1. **Precision ($P$):**  
-   Of all the bounding boxes where the model actually said 'this is Me' how many of those were actually me?
-   $$\text{Precision} = \frac{TP}{TP + FP} = 91.7\%$$
-   High precision means the model is quite happy to stop bothering my colleagues with false positives.
+1. Precision (P): Of all the bounding boxes where the model actually said 'this is Me' how many of those were actually me? Precision = TP/(TP+FP) = 91.7%. High precision means the model is quite happy to stop bothering my colleagues with false positives.
+2. Recall (R): Of all the pictures that I was actually present, how many did the model find? Recall = TP/(TP+FN) = 80.0%. A very good recall ensures the system doesn't drop any detections when the lighting is poor.
+3. Classification Accuracy: Overall accuracy across all proposals: Accuracy = (TP + TN) / (TP + TN + FP + FN)
+4. F1-Score (F1): The classic case of a trade-off between precision and recall. The F1-score is a harmonic mean of the two: F1 = 2 * (Precision * Recall) / (Precision + Recall) = 0.854. The curve peaks at 0.857 at a confidence of 0.61.
+5. Mean Average Precision (mAP): this is the area under the precision-recall curve. I looked at mAP@0.50 (80.4%) which is the mAP for boxes that overlap the ground truth by at least 50%, and mAP@0.50:0.95 (34.9%) which is the mAP averaged across ten different overlap thresholds from 0.50 to 0.95.
+6. Why PR-AUC matters more than ROC-AUC in object detection: in the case of basic binary classification you've got ROC curves with True Positive Rate on the y-axis and False Positive Rate on the x-axis. In the case of object detection grids the number of true negatives (i.e. empty background boxes) vastly outweighs the number of objects you're actually trying to detect by tens of thousands to one. That huge number of true negatives pulled the false positive rate right down to near zero and therefore artificially inflated the ROC-AUC scores to well above 0.98. Precision-Recall curves are the way to go in this case as they look at the actual detections and aren't distorted by the sheer volume of empty background space.
 
-2. **Recall ($R$):**  
-   Of all the pictures that I was actually present, how many did the model find?
-   $$\text{Recall} = \frac{TP}{TP + FN} = 80.0\%$$
-   A very good recall ensures the system doesn't drop any detections when the lighting is poor.
-
-3. **Classification Accuracy:**  
-   Overall accuracy across all proposals:
-   $$\text{Accuracy} = \frac{TP + TN}{TP + TN + FP + FN}$$
-
-4. **F1-Score ($F_1$):**  
-   The classic case of a trade-off between precision and recall. The F1-score is a harmonic mean of the two:
-   $$F_1 = 2 \cdot \frac{\text{Precision} \cdot \text{Recall}}{\text{Precision} + \text{Recall}} = 0.854 \quad (\text{Peak: } 0.857 \text{ at confidence } 0.61)$$
-
-5. **Mean Average Precision (mAP):**  
-   This is the area under the precision-recall curve. I looked at:
-   - **$\text{mAP}@0.50 = 80.4\%$:** The mAP for boxes that overlap the ground truth by at least 50%.
-   - **$\text{mAP}@0.50:0.95 = 34.9\%$:** The mAP averaged across ten different overlap thresholds from 0.50 to 0.95.
-
-6. **Why PR-AUC matters more than ROC-AUC in object detection:**  
-   In the case of basic binary classification you've got ROC curves with True Positive Rate on the y-axis and False Positive Rate on the x-axis. In the case of object detection grids the number of true negatives (i.e. empty background boxes) vastly outweighs the number of objects you're actually trying to detect by tens of thousands to one. That huge number of true negatives pulled the false positive rate right down to near zero and therefore artificially inflated the ROC-AUC scores to well above 0.98. Precision-Recall curves are the way to go in this case as they look at the actual detections and aren't distorted by the sheer volume of empty background space.
+---
 
 ### 2.3 Bounding Box Coordinate Mathematics and Cross-Platform Rendering
-YOLO spat out bounding boxes as four normalized numbers between 0.0 and 1.0 (relative to image width $W_{\text{img}}$ and height $H_{\text{img}}$):
-$$\text{box} = [x_{\text{center}}, y_{\text{center}}, w, h]$$
+
+YOLO spat out bounding boxes as four normalized numbers between 0.0 and 1.0 (relative to image width W_img and height H_img):
+
+```
+box = [x_center, y_center, width, height]
+```
 
 Drawing these on web and phone screens required standard coordinate math:
-1. **Absolute Pixel Origins:**
-   $$x_{\text{min}} = \left(x_{\text{center}} - \frac{w}{2}\right) \cdot W_{\text{img}}, \quad y_{\text{min}} = \left(y_{\text{center}} - \frac{h}{2}\right) \cdot H_{\text{img}}$$
-2. **Absolute Dimensions:**
-   $$\text{box\_width} = w \cdot W_{\text{img}}, \quad \text{box\_height} = h \cdot H_{\text{img}}$$
-3. **Non Maximum Suppression (NMS):** Suppress overlapping / duplicate boxes via NMS at $\text{IoU} \ge 0.50$:
-   $$\text{IoU}(A, B) = \frac{\text{Area}(A \cap B)}{\text{Area}(A \cup B)}$$
-4. **Web HTML5 Canvas:** On the Vite web client scale coordinates onto an HTML5 canvas using $s_x = W_{\text{canvas}} / W_{\text{img}}$ and $s_y = H_{\text{canvas}} / H_{\text{img}}$.
-5. **Mobile Viewport Scaling:** In React Native we scale the boxes by an isotropic factor of $s = \min(W_{\text{viewport}} / W_{\text{img}}, H_{\text{viewport}} / H_{\text{img}})$ and apply letterbox offsets $(dx, dy)$ so that the boxes don't get distorted on the tall phone screens.
+
+- Absolute Pixel Origins: x_min = (x_center - width / 2) * W_img, y_min = (y_center - height / 2) * H_img.
+- Absolute Dimensions: box_width = width * W_img, box_height = height * H_img.
+- Non Maximum Suppression (NMS): suppress overlapping/ duplicate boxes via NMS at IoU >= 0.50: IoU(A,B) = Area(A ∩ B) / Area(A ∪ B).
+- Web HTML5 Canvas: on the Vite web client scale co-ordinated onto an HTML5 canvas using sx = W_canvas / W_img and sy = H_canvas / H_img.
+- Mobile Viewport Scaling: in React Native we scale the boxes by an isotropic factor of s = min(W_viewport/W_img, H_viewport/H_img) and apply letterbox offsets (dx,dy) so that the boxes don't get distorted on the tall phone screens.
+
+---
 
 ### 2.4 Retrieval-Augmented Generation (RAG) Architecture
+
 This system completely decoupled computer vision from knowledge retrieval. The YOLO model had a single job: to find me and then return my verified identity token. The backend would then use that token to query a vector database (Supabase or pgvector) to retrieve the attendance log, workout plans or lab permissions. It was a clean separation of perception from data which kept the model very lightweight, improved response times and ensured that the user's photos stayed entirely within RAM.
 
 ---
@@ -214,14 +220,14 @@ This system completely decoupled computer vision from knowledge retrieval. The Y
 
 I used practical, lightweight tools throughout the project. Details are in Table 2.
 
-*Table 2: Tools and technologies used across the system*
+### Table 2: Tools and technologies used across the system
 
 | Tool / Technology | Role in the Project |
 | :--- | :--- |
 | **Ultralytics Platform** | Ran cloud GPU training, hosted annotation, and managed Google Cloud Run inference. |
 | **YOLO26n [2]** | Nano vision model fine-tuned on my personal dataset. |
 | **Google Drive** | Hosts the 1,021 raw training photos for open public download. |
-| **GitHub** | Version control repo (`object-detection-suite`). |
+| **GitHub** | Version control repo (object-detection-suite). |
 | **VS Code & Python 3.12** | Local development setup for backend routes and test scripts. |
 | **FastAPI [5] & Pillow [8]** | Python backend for memory validation and zero-storage cleanup. |
 | **Vercel [6]** | Edge platform hosting the serverless API and Vite web app. |
@@ -229,27 +235,30 @@ I used practical, lightweight tools throughout the project. Details are in Table
 | **OpenCV [10] & MediaPipe [11]** | Reference libraries used to verify bounding box margins during debugging. |
 | **Supabase & pgvector** | PostgreSQL cloud database for telemetry and vector lookups. |
 
+
 ---
 
 ## 4. Methodology
 
 ### 4.1 Data Collection
-I could not use an existing dataset because I needed the model to recognize me. So, over several days, I took 1,021 photos of myself around campus and in my hostel using my phone. The photos included harsh midday sun, dim hostel bedrooms, backlit hallways with bright windows, and some blurry handheld shots. I also took group photos with two to eight classmates standing around me. This variety helped the model learn to recognize me in different conditions.
 
-All 1,021 photos (103.37 MB) are in a public Google Drive folder:
-- **Google Drive Dataset Repository (1,021 Images):**  
-  [https://drive.google.com/drive/folders/1ARy1CuAKU0G6YdFLEGivOJGJ0VmC_hNm?usp=sharing](https://drive.google.com/drive/folders/1ARy1CuAKU0G6YdFLEGivOJGJ0VmC_hNm?usp=sharing)
-- **Local Download Archive:** Stored locally in `C:\Users\torme\Downloads\exp2_dataset_photos`.
+I could not use an existing dataset because I needed the model to recognize me. So, over several days, I took 1,021 photos of myself around campus and in my hostel using my phone. The photos included harsh midday sun, dim hostel bedrooms, backlit hallways with bright windows, and some blurry handheld shots. I also took group photos with two to eight classmates standing around me. This variety helped the model learn to recognize me in different conditions. There is also a local copy on my laptop at C:\Users\torme\Downloads\exp2_dataset_photos.
+
+---
 
 ### 4.2 Annotation
-I labeled every image in the standard YOLO format: `class_id x_center y_center width height` (all normalized from 0.0 to 1.0).
+
+I labeled every image in the standard YOLO format: class_id x_center y_center width height (all normalized from 0.0 to 1.0).
 
 Class 0 represented me ('Prosper'). In group shots with my colleagues, I left them unboxed on purpose. This way, the loss function penalized the network if it mistook someone else for me. After 100 epochs, the network learned that only I should be detected, and other people are just background. I also manually checked every bounding box to keep the borders tight.
 
+---
+
 ### 4.3 Training Setup and Runs
+
 I ran two training experiments. The first was my initial baseline ('exp') using 945 images on YOLOv8n. The second was the final model ('exp-2') using 1,021 images on YOLO26n. The second experiment was run on cloud hardware (NVIDIA RTX PRO 6000 GPU with 97,252MiB VRAM and an AMD EPYC 9655 processor). Table 3 details the hyperparameters.
 
-*Table 3: Training setup and hyperparameters (exp-2)*
+### Table 3: Training setup and hyperparameters (exp-2)
 
 | Hyperparameter / Setting | Configured Value |
 | :--- | :--- |
@@ -265,6 +274,7 @@ I ran two training experiments. The first was my initial baseline ('exp') using 
 | **Data Augmentations** | Mosaic (p=1.0, closed final 10 epochs), Flip (p=0.5), Random Erasing (p=0.4) |
 | **Total Training Duration** | 340.6 seconds (~5.67 minutes across all 100 epochs) |
 
+
 The model was trained for 100 epochs using SGD. I used mosaic augmentation, random horizontal flips, and random erasing to help the model find me even when parts of me were hidden. Training took 340.6 seconds.
 
 ---
@@ -272,48 +282,57 @@ The model was trained for 100 epochs using SGD. I used mosaic augmentation, rand
 ## 5. Results and Analysis
 
 ### 5.1 Quantitative Benchmark
+
 Comparing the two runs showed clear progress. The validation numbers are in Table 4.
 
-*Table 4: Quantitative performance comparison (Run 1 vs. Run 2)*
+### Table 4: Quantitative performance comparison (Run 1 vs. Run 2)
 
 | Evaluation Metric | Run 1 (exp, 945 imgs) | Run 2 (exp-2, 1,021 imgs) | Gain (pts) | Relative Gain |
-| :--- | :---: | :---: | :---: | :---: |
-| **Precision (P)** | **90.8%** | **91.7%** | **+0.9%** | **+1.0%** |
-| **Recall (R)** | **78.6%** | **80.0%** | **+1.4%** | **+1.8%** |
-| **mAP@0.50** | **80.5%** | **80.4%** | **-0.1%** | **-0.1%** |
-| **mAP@0.50:0.95** | **31.7%** | **34.9%** | **+3.2%** | **+10.1%** |
+| :--- | :--- | :--- | :--- | :--- |
+| **Precision (P)** | 90.8% | 91.7% | +0.9% | +1.0% |
+| **Recall (R)** | 78.6% | 80.0% | +1.4% | +1.8% |
+| **mAP@0.50** | 80.5% | 80.4% | -0.1% | -0.1% |
+| **mAP@0.50:0.95** | 31.7% | 34.9% | +3.2% | +10.1% |
+
+
+---
 
 ### 5.2 Analysis of the Improvement
+
 Precision increased to 91.7%, so 9 out of 10 detections are correct. Recall is at 80.0%, which means the model finds me in 4 out of 5 difficult cases. mAP@0.50 stayed about the same at 80.4%, but strict mAP@0.50:0.95 improved from 31.7% to 34.9%, a 10.1% relative gain. This shows YOLO26n draws tighter boxes around my head and torso compared to the baseline.
 
 In the first run, most boxes were loose and shifted when the camera angle changed. The second run, using 992x992 high resolution and improved architecture, produced much cleaner and well-defined boundaries. Negative sampling also worked well, with no false alarms on classmates during validation.
 
+---
+
 ### 5.3 Diagnostic Curves and Predictions
 
-#### Figure 1: Training and Validation Metrics Dashboard (`results.png`)
-![Training Results](docs/graphs/results.png)
-*Figure 1: 100-Epoch Training and Validation Metrics Dashboard (results.png)*
+Figure 1: the 12 telemetry charts across all 100 epochs.
 
-In Figure 1, the bounding box loss decreased from 1.750 to 0.806. Classification loss dropped from 38.52 to 0.233 as the network learned to tell me apart from the background. The validation curves stayed mostly flat, showing that the augmentations didn't just make the model memorize the training images. The best validation fitness was at epoch 34 (saved as `exp-2.pt`, 5.54MB).
+**Figure 1: 100-Epoch Training and Validation Metrics Dashboard (results.png)**
 
-#### Figure 2: Precision-Recall Curve (`PR_curve.png`)
-![Precision-Recall Curve](docs/graphs/PR_curve.png)
-*Figure 2: Precision-Recall Curve Reaching mAP50 = 80.4% (PR_curve.png)*
+![Figure 1: Training and Validation Metrics Dashboard](docs/graphs/results.png)
+
+In Figure 1, the bounding box loss decreased from 1.750 to 0.806. Classification loss dropped from 38.52 to 0.233 as the network learned to tell me apart from the background. The validation curves stayed mostly flat, showing that the augmentations didn't just make the model memorize the training images. The best validation fitness was at epoch 34 (saved as exp-2.pt, 5.54MB).
+
+**Figure 2: Precision-Recall Curve Reaching mAP50 = 80.4% (PR_curve.png)**
+
+![Figure 2: Precision-Recall Curve](docs/graphs/PR_curve.png)
 
 Figure 2 shows the precision-recall curve. The model kept 1.00 precision from recall 0.0 up to 0.60. When fully confident, it made almost no mistakes. The area under the curve was mAP@0.50 = 80.4%.
 
-#### Figure 3: F1-Confidence Optimization Curve (`F1_curve.png`)
-![F1-Confidence Curve](docs/graphs/F1_curve.png)
-*Figure 3: F1-Confidence Optimization Curve Peaking at 0.857 (F1_curve.png)*
+**Figure 3: F1-Confidence Optimization Curve Peaking at 0.857 (F1_curve.png)**
+
+![Figure 3: F1-Confidence Optimization Curve](docs/graphs/F1_curve.png)
 
 Figure 3 shows the F1-score at different confidence thresholds, peaking at 0.857 when confidence is 0.61. In the live web and mobile apps, I use a default threshold of 0.25 to avoid losing recall on quick snapshots. Batch jobs use the peak threshold of 0.61.
 
-#### Figures 4 & 5: Confusion Matrices (`confusion_matrix.png` & `confusion_matrix_normalized.png`)
-| Raw Detection Counts | Normalized Matrix |
-| :---: | :---: |
-| ![Confusion Matrix](docs/graphs/confusion_matrix.png) | ![Normalized Confusion Matrix](docs/graphs/confusion_matrix_normalized.png) |
+**Figures 4 & 5: Raw Counts and Normalized Confusion Matrices (confusion_matrix.png & confusion_matrix_normalized.png)**
 
-*Figures 4 & 5: Raw Counts and Normalized Confusion Matrices (confusion_matrix.png & confusion_matrix_normalized.png)*
+<p align="center">
+  <img src="docs/graphs/confusion_matrix.png" width="48%" />
+  <img src="docs/graphs/confusion_matrix_normalized.png" width="48%" />
+</p>
 
 Figures 4 and 5 show the confusion matrices. Figure 4 has 13 test targets detected correctly and 72 candidate proposals suppressed before NMS. Figure 5, which is row-wise normalized, shows that 87% of target instances were captured correctly, confirming our 0.50 IoU cut-off.
 
@@ -322,28 +341,34 @@ Figures 4 and 5 show the confusion matrices. Figure 4 has 13 test targets detect
 ## 6. Deployment
 
 ### 6.1 Ultralytics Cloud Deployment
-I deployed the 5.54 MB weights file (`exp-2.pt`) as a container service on Google Cloud Run in europe-southwest1:
-- **Inference Endpoint URL:** `https://predict-6b01cbfb6aa91a04b3325654-dproatj77a-no.a.run.app`
 
-The container needs an Ultralytics API key. We've kept that key strictly within the server side environment variables (`ULTRALYTICS_API_KEY`) on Vercel. It's never in any client side JavaScript or mobile code.
+I deployed the 5.54 MB weights file (exp-2.pt) as a container service on Google Cloud Run in europe-southwest1:
+
+[https://predict-6b01cbfb6aa91a04b3325654-dproatj77a-no.a.run.app](https://predict-6b01cbfb6aa91a04b3325654-dproatj77a-no.a.run.app)
+
+The container needs an Ultralytics API key. We've kept that key strictly within the server side environment variables (ULTRALYTICS_API_KEY) on Vercel. It's never in any client side JavaScript or mobile code.
 
 ### 6.2 FastAPI Gateway on Vercel
-A serverless FastAPI proxy on Vercel bridges clients to the model, exposing `/api/health` and `/api/detect` with three strict rules:
-1. **Open access:** I've built the system so that anyone can just access it, no need to create an account.
-2. **Zero storage memory lifecycle:** The uploaded images remain entirely in the volatile RAM. The server runs 'del image_bytes' and 'gc.collect()' within a guaranteed finally block straight after inference is complete. Zero bytes ever touch the server's hard drives or databases.
-3. **Payload limit:** Payloads over 4.5MB are rejected with an HTTP 413, which in turn prevents edge timeouts.
+
+A serverless FastAPI proxy on Vercel bridges clients to the model, exposing /api/health and /api/detect with three strict rules:
+
+1. Open access: I've built the system so that anyone can just access it, no need to create an account.
+2. Zero storage memory lifecycle: the uploaded images remain entirely in the volatile RAM. The server runs 'del image_bytes' and 'gc.collect()' within a guaranteed finally block straight after inference is complete. Zero bytes ever touch the server's hard drives or databases.
+3. Payload limit: payloads over 4.5MB are rejected with an HTTP 413, which in turn prevents edge timeouts.
 
 ### 6.3 Web Application
-The web app is an HTML5 Canvas studio built with Vite and hosted on Vercel:
-- **Live Web Studio:** [https://object-detection-suite.vercel.app](https://object-detection-suite.vercel.app)
+
+The web app is an HTML5 Canvas studio built with Vite and hosted on Vercel: https://object-detection-suite.vercel.app
 
 Users can upload photos or use their webcam. Bounding boxes are drawn live on the canvas, and a Clear button removes the image bitmaps from browser memory.
 
 ### 6.4 Mobile Application
-I built the mobile app with React Native and Expo under the account `inkedme`:
-- **Expo Project URL:** [https://expo.dev/accounts/inkedme/projects/vision-detect-mobile](https://expo.dev/accounts/inkedme/projects/vision-detect-mobile)
 
-Users can take a picture or choose one from their gallery. The viewport uses isotropic scaling with letterbox offsets, so the boxes stay in place on tall phone screens. I also generated an installable Android APK using EAS (`eas.json`).
+I built the mobile app with React Native and Expo under the account inkedme:
+
+https://expo.dev/accounts/inkedme/projects/vision-detect-mobile
+
+Users can take a picture or choose one from their gallery. The viewport uses isotropic scaling with letterbox offsets, so the boxes stay in place on tall phone screens. I also generated an installable Android APK using EAS (eas.json).
 
 ---
 
@@ -351,87 +376,105 @@ Users can take a picture or choose one from their gallery. The viewport uses iso
 
 I manually tested the live system across five real scenarios (see Table 5).
 
-*Table 5: Field test and automated verification results*
+### Table 5: Field test and automated verification results
 
 | Test Scenario | Images | Author Detected | False Positives | Qualitative Notes |
-| :--- | :---: | :---: | :---: | :--- |
+| :--- | :--- | :--- | :--- | :--- |
 | **Solo photo, optimal daylight** | 5 | 5 (100%) | 0 | Clean detection; bounding box margin tightly localized. |
 | **Solo photo, dim indoor / backlit** | 4 | 4 (100%) | 0 | Detected reliably despite harsh backlighting and shadows. |
 | **Group photo (2 to 4 people)** | 4 | 4 (100%) | 0 | Author successfully isolated; peers correctly ignored. |
 | **Group photo (5 to 8 people)** | 3 | 3 (100%) | 0 | Author detected in crowded scene; zero false alerts on others. |
 | **Partial facial occlusion (glasses/hand)** | 2 | 2 (100%) | 0 | Reliable recognition despite partial visual occlusion. |
 
-All automated smoke tests against the live API passed (5 out of 5): health endpoint uptime, open access, token passthrough, mobile sync, and zero disk leaks. Average roundtrip latency was about **~575ms**.
+
+All automated smoke tests against the live API passed (5 out of 5): health endpoint uptime, open access, token passthrough, mobile sync, and zero disk leaks. Average roundtrip latency was about 575ms.
 
 ---
 
 ## 8. Challenges and Lessons Learned
 
-1. **Phone photos are very large:** Usually 10MB to 15MB. Vercel rejects files over 4.5MB with an HTTP 413 error. I solved this by downsampling images on the web frontend and using Pillow to create thumbnails in FastAPI before sending the bytes to Cloud Run.
-2. **Memory leaks in the zero-storage backends:** Python reference cycles can leave image bytes in RAM. Wrapping the pipeline in a try-finally block and explicitly calling 'del image_bytes' and 'gc.collect()' fixed the memory leaks and kept disk storage at zero.
-3. **Box drift on mobile viewports:** Different phones have various aspect ratios. Using isotropic scaling with letterbox offsets stopped the boxes from drifting away from my face.
-4. **API Key Leaks:** Including API keys in mobile code makes them easy to steal. Routing calls through the Vercel gateway and keeping API keys in environment variables is a much safer way to protect cloud credentials.
-5. **The main lesson:** Dataset quality matters much more than tweaking model hyperparameters. Negative sampling in group photos improved accuracy more than any code change could have.
+1. Phone photos are very large, usually 10MB to 15MB. Vercel rejects files over 4.5MB with an HTTP 413 error. I solved this by downsampling images on the web frontend and using Pillow to create thumbnails in FastAPI before sending the bytes to Cloud Run.
+2. Memory leaks in the zero-storage backends: Python reference cycles can leave image bytes in RAM. Wrapping the pipeline in a try-finally block and explicitly calling 'del image_bytes' and 'gc.collect()' fixed the memory leaks and kept disk storage at zero.
+3. Box drift on mobile viewports: Different phones have various aspect ratios. Using isotropic scaling with letterbox offsets stopped the boxes from drifting away from my face.
+4. API Key Leaks: Including API keys in mobile code makes them easy to steal. Routing calls through the Vercel gateway and keeping API keys in environment variables is a much safer way to protect cloud credentials.
+5. The main lesson is that dataset quality matters much more than tweaking model hyperparameters. Negative sampling in group photos improved accuracy more than any code change could have.
 
 ---
 
 ## 9. Conclusion and Recommendations
 
 ### 9.1 Conclusion
+
 This project showed that I can train and deploy a real-world object detection system using regular phone photos and cloud computing. The YOLO26n model was fine-tuned on 1,021 images with an NVIDIA RTX PRO 6000 GPU and reached 91.7% precision, 80.0% recall, 80.4% mAP@50, and 34.9% mAP@50-95. It was deployed to Google Cloud Run and served through a serverless FastAPI gateway on Vercel. The system stores no images and returns detections in under 600ms.
 
 ### 9.2 Recommendations
-1. **Edge Quantisation:** Convert the weights into INT8 ONNX, TFLite or CoreML so that inference can run completely offline on a mobile phone with no internet required.
-2. **Multi-student tracking:** I need to expand the dataset to allow us to recognize other students so we can do campus-wide automated attendance tracking.
-3. **3D Pose and Depth:** Add dual camera stereoscopic depth estimation to track physical body mechanics for sports and fitness.
+
+1. Edge Quantisation: convert the weights into INT8 ONNX, TFLite or CoreML so that inference can run completely offline on a mobile phone with no internet required.
+2. Multi-student tracking: I need to expand the dataset to allow us to recognize other students so we can do campus-wide automated attendance tracking.
+3. 3D Pose and Depth: Add dual camera stereoscopic depth estimation to track physical body mechanics for sports and fitness.
 
 ---
 
 ## References
 
-- [1] J. Redmon, S. Divvala, R. Girshick and A. Farhadi, "You Only Look Once: Unified, Real-Time Object Detection", in *Proc. IEEE Conf. on Computer Vision and Pattern Recognition (CVPR)*, 2016, pp. 779-788.  
-- [2] Ultralytics Inc., "Ultralytics YOLO26 Architecture and Deployment Documentation," 2026. [Online]. Available: https://docs.ultralytics.com  
-- [3] T.-Y. Lin et al., "Microsoft COCO: Common Objects in Context", in *Proc. European Conf. Computer Vision (ECCV)*, 2014, pp. 740–755.  
-- [4] S. Ren, K. He, R. Girshick and J. Sun, "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks", *IEEE Trans. Pattern Analysis and Machine Intelligence*, vol. 39, no. 6, pp. 1137–1149, 2017.  
-- [5] S. Ramírez, "FastAPI: High performance, easy to learn, fast to code, ready for production," 2024. [Online]. Available: https://fastapi.tiangolo.com  
-- [6] Vercel Inc., "Vercel Serverless Functions and Edge Network Architecture," 2024. [Online]. Available: https://vercel.com/docs  
-- [7] Meta Platforms Inc. and Expo Project, 'React Native and Expo Application Services Documentation', 2024. [Online]. Available: https://reactnative.dev and https://docs.expo.dev  
-- [8] A. Clark and contributors, "Pillow (PIL Fork) Documentation," 2024. [Online]. Available: https://python-pillow.org  
-- [9] D. Apaak, "Factors influencing sports talent development in senior high schools in the Upper East Region of Ghana", *African Journal of Teacher Education*, vol. 13, no. 2, 2024.  
-- [10] G. Bradski, "The OpenCV Library", *Dr. Dobb's Journal of Software Tools*, 2000.  
-- [11] C. Lugaresi et al., "MediaPipe: A framework for building perception pipelines," *arXiv preprint arXiv:1906.08172*, 2019.  
-- [12] Z. Cao et al., "OpenPose: Realtime multi-person 2D pose estimation using part affinity fields," *IEEE Trans. Pattern Anal. Mach. Intell.*, vol. 43, no. 1, pp. 172–186, 2021.  
+[1] J. Redmon, S. Divvala, R. Girshick and A. Farhadi, "You Only Look Once: Unified, Real-Time Object Detection", in Proc. IEEE Conf. on Computer Vision and Pattern Recognition (CVPR), 2016, pp. 779-788.  
+[2] Ultralytics Inc., "Ultralytics YOLO26 Architecture and Deployment Documentation," 2026. [Online]. Available: https://docs.ultralytics.com  
+[3] T.-Y. Lin et al., "Microsoft COCO: Common Objects in Context", in Proc. European Conf. Computer Vision (ECCV), 2014, pp. 740–755.  
+[4] S. Ren, K. He, R. Girshick and J. Sun, "Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks", IEEE Trans. Pattern Analysis and Machine Intelligence, vol. 39, no. 6, pp. 1137–1149, 2017.  
+[5] S. Ramírez, "FastAPI: High performance, easy to learn, fast to code, ready for production," 2024. [Online]. Available: https://fastapi.tiangolo.com  
+[6] Vercel Inc., "Vercel Serverless Functions and Edge Network Architecture," 2024. [Online]. Available: https://vercel.com/docs  
+[7] Meta Platforms Inc. and Expo Project, 'React Native and Expo Application Services Documentation', 2024. [Online]. Available: https://reactnative.dev and https://docs.expo.dev  
+[8] A. Clark and contributors, "Pillow (PIL Fork) Documentation," 2024. [Online]. Available: https://python-pillow.org  
+[9] D. Apaak, "Factors influencing sports talent development in senior high schools in the Upper East Region of Ghana", African Journal of Teacher Education, vol. 13, no. 2, 2024.  
+[10] G. Bradski, "The OpenCV Library", Dr. Dobb's Journal of Software Tools, 2000.  
+[11] C. Lugaresi et al., "MediaPipe: A framework for building perception pipelines," arXiv preprint arXiv:1906.08172, 2019.  
+[12] Z. Cao et al., "OpenPose: Realtime multi-person 2D pose estimation using part affinity fields," IEEE Trans. Pattern Anal. Mach. Intell., vol. 43, no. 1, pp. 172–186, 2021.  
 
 ---
 
 ## Appendices
 
 ### Appendix A: Dataset and Annotation Screenshots
+
 Sample operational photographs from the authentic 1,021-image dataset stored in Google Drive:
-- Figure 6 & Figure 7: Sample photographs from `docs/graphs/dataset_sample_1.jpg` and `docs/graphs/dataset_sample_2.jpg`.
+
+**Figures 6 & 7: Authentic Operational Dataset Samples (Google Drive Archive)**
+
+<p align="center">
+  <img src="docs/graphs/dataset_sample_1.jpg" width="48%" />
+  <img src="docs/graphs/dataset_sample_2.jpg" width="48%" />
+</p>
 
 ### Appendix B: Training Telemetry & Figures
-The trained weights checkpoint (`exp-2.pt`, 5.54MB) and the raw 101 epoch telemetry metrics (`results.csv`) are both in `docs/graphs/`.
+
+The trained weights checkpoint (exp-2.pt, 5.54MB) and the raw 101 epoch telemetry metrics (results.csv) are both in docs/graphs/
 
 ### Appendix C: Deployment and Application Architecture
+
 Decoupled serverless deployment topology connecting the client apps, the Vercel FastAPI gateway and the dedicated Ultralytics Cloud Run inference container with strict zero storage RAM enforcement.
+
+**Figure 8: Decoupled Zero-Storage Client-Server Architecture**
+
+![Figure 8: Decoupled Zero-Storage Client-Server Architecture](docs/graphs/figure8_architecture.png)
 
 ### Appendix D: Project Resources Table
 
-*Table 6: Project resources*
+### Table 6: Project resources
 
 | Resource | Link / Specification |
 | :--- | :--- |
-| **Source Code (GitHub Repository)** | [https://github.com/tormekpeyprosper-cpu/object-detection-suite](https://github.com/tormekpeyprosper-cpu/object-detection-suite) |
-| **Production Web Application (Vercel)** | [https://object-detection-suite.vercel.app](https://object-detection-suite.vercel.app) |
-| **Live API Health Endpoint** | [https://object-detection-suite.vercel.app/api/health](https://object-detection-suite.vercel.app/api/health) |
-| **Live Detection API Endpoint** | `https://object-detection-suite.vercel.app/api/detect` |
-| **Ultralytics Cloud Run Inference Host** | `https://predict-6b01cbfb6aa91a04b3325654-dproatj77a-no.a.run.app` |
-| **Mobile Application (Expo / EAS Project)** | [https://expo.dev/accounts/inkedme/projects/vision-detect-mobile](https://expo.dev/accounts/inkedme/projects/vision-detect-mobile) |
-| **Image Dataset (Google Drive - 1,021 Photos)** | [https://drive.google.com/drive/folders/1ARy1CuAKU0G6YdFLEGivOJGJ0VmC_hNm?usp=sharing](https://drive.google.com/drive/folders/1ARy1CuAKU0G6YdFLEGivOJGJ0VmC_hNm?usp=sharing) |
-| **Local Dataset Archive Folder** | `C:\\Users\\torme\\Downloads\\exp2_dataset_photos` (1,021 JPEGs, 103.37 MB) |
-| **Presentation Slide Deck (16:9 PPTX)** | [`docs/Object_Detection_Suite_Presentation.pptx`](docs/Object_Detection_Suite_Presentation.pptx) |
-| **API Authentication Configuration** | Server-side environment variable `ULTRALYTICS_API_KEY` stored in Vercel |
+| **Source Code (GitHub Repository)** | https://github.com/tormekpeyprosper-cpu/object-detection-suite |
+| **Production Web Application (Vercel)** | https://object-detection-suite.vercel.app |
+| **Live API Health Endpoint** | https://object-detection-suite.vercel.app/api/health |
+| **Live Detection API Endpoint** | https://object-detection-suite.vercel.app/api/detect |
+| **Ultralytics Cloud Run Inference Host** | https://predict-6b01cbfb6aa91a04b3325654-dproatj77a-no.a.run.app |
+| **Mobile Application (Expo / EAS Project)** | https://expo.dev/accounts/inkedme/projects/vision-detect-mobile |
+| **Image Dataset (Google Drive - 1,021 Photos)** | https://drive.google.com/drive/folders/1ARy1CuAKU0G6YdFLEGivOJGJ0VmC_hNm?usp=sharing |
+| **Local Dataset Archive Folder** | C:\Users\torme\Downloads\exp2_dataset_photos (1,021 JPEGs, 103.37 MB) |
+| **Presentation Slide Deck (16:9 PPTX)** | docs/Object_Detection_Suite_Presentation.pptx |
+| **API Authentication Configuration** | Server-side environment variable ULTRALYTICS_API_KEY stored in Vercel |
+
 
 ### Appendix E: Declaration of Academic Integrity and Originality
+
 I hereby declare that this project report entitled 'Custom Object Detection and Recognition of Myself Using Ultralytics YOLO' is the outcome of my own investigative engineering work, conducted under the supervision of Mr. Harry Atieku-Boateng in the Department of Industrial Software Engineering at Pentecost University. All experimental metrics, model weights, dataset annotations, and client applications were authored, verified, and documented by the candidate. All literature, academic papers, and third-party software libraries referenced throughout this study have been fully acknowledged and cited in the References section in compliance with institutional guidelines.
