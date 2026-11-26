@@ -15,12 +15,11 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import qn, nsdecls
 
-BASE_DIR = r"C:\Users\torme\.gemini\antigravity\scratch\object-detection-suite"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 GRAPHS_DIR = os.path.join(BASE_DIR, "docs", "graphs")
 TARGET_TXT = os.path.join(BASE_DIR, "target_verbatim_text.txt")
 DOCX_OUT_1 = os.path.join(BASE_DIR, "docs", "Project_Report_Object_Detection_Suite.docx")
 DOCX_OUT_2 = os.path.join(BASE_DIR, "docs", "PUIS23210047_IA_AI_TormekpeyIanProsper_ISE.docx")
-DOCX_ONEDRIVE = r"C:\Users\torme\OneDrive\Documents\PUIS23210047_IA_AI_TormekpeyIanProsper_ISE.docx"
 REPORT_MD = os.path.join(BASE_DIR, "REPORT.md")
 
 def clean_dashes(text):

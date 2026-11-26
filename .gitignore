@@ -44,9 +44,12 @@ web-app/.env
 # Vercel
 .vercel/
 
-# Office / Word lock files
+# Office / Word / PowerPoint lock files
 ~$*.docx
 ~$*.doc
+~$*.pptx
+~$*.xlsx
+~$*
 *.tmp
 
 # Expo & React Native

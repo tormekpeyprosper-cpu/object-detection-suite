@@ -5,7 +5,7 @@ Generate exact REPORT.md matching target_verbatim_text.txt
 
 import os
 
-BASE_DIR = r"C:\Users\torme\.gemini\antigravity\scratch\object-detection-suite"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TARGET_TXT = os.path.join(BASE_DIR, "target_verbatim_text.txt")
 REPORT_MD = os.path.join(BASE_DIR, "REPORT.md")
 

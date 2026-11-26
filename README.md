@@ -16,17 +16,19 @@ A complete, production-verified cross-platform computer vision system featuring 
 object-detection-suite/
 ├── api/                      # Vercel Serverless Python Entrypoint
 │   ├── index.py              # Serverless bridge directing /api/* to FastAPI
+│   ├── main.py               # Bundled FastAPI gateway module for Vercel deployment
 │   └── requirements.txt      # Python dependencies for Vercel deployment
 ├── backend/                  # Shared FastAPI Python Backend
 │   ├── main.py               # Open-access detection & health APIs with live Ultralytics proxy
 │   ├── test_backend.py       # Automated backend test suite
 │   ├── requirements.txt      # Python dependencies (FastAPI, Uvicorn, HTTPX, Pillow)
-│   ├── .env                  # Live environment variables (Ultralytics & Supabase)
+│   ├── .env                  # Live environment variables (local only, gitignored)
 │   └── .env.example          # Environment variable template
 ├── docs/                     # Documentation and Training Artifacts (Times New Roman 16 pt)
-│   ├── Project_Report_Object_Detection_Suite.docx # Formal project report (Chapters 1-9, Tables 0-6)
-│   ├── Project_Explanation_and_Defense_Guide.docx # Viva defense guide (Q&A, talking points, checklist)
-│   ├── Object_Detection_Suite_Presentation.pptx   # 17-slide 16:9 presentation deck with embedded figures & notes
+│   ├── Project_Report_Object_Detection_Suite.docx         # Formal project report (Chapters 1-9, Tables 0-6)
+│   ├── PUIS23210047_IA_AI_TormekpeyIanProsper_ISE.docx    # Submission-named copy of the formal report
+│   ├── Project_Explanation_and_Defense_Guide.docx         # Viva defense guide (Q&A, talking points, checklist)
+│   ├── Object_Detection_Suite_Presentation.pptx           # 17-slide 16:9 presentation deck with embedded figures & notes
 │   └── graphs/               # Generated evaluation plots, weights, and telemetry
 │       ├── results.png       # 100-epoch training and validation loss curves (Figure 1)
 │       ├── PR_curve.png      # Precision-Recall curve (80.4% mAP@50, Figure 2)
@@ -35,6 +37,7 @@ object-detection-suite/
 │       ├── confusion_matrix_normalized.png # Normalized confusion matrix (Figure 5)
 │       ├── dataset_sample_1.jpg # Sample authentic operational photograph (Figure 6)
 │       ├── dataset_sample_2.jpg # Sample authentic operational photograph (Figure 7)
+│       ├── figure8_architecture.png # Decoupled Zero-Storage Client-Server Architecture (Figure 8)
 │       ├── results.csv       # Raw epoch metrics log (101 epochs)
 │       └── exp-2.pt          # PyTorch trained weights checkpoint (5.54 MB)
 ├── web-app/                  # Modern Web Client (HTML5 Canvas + Vite)
@@ -43,13 +46,19 @@ object-detection-suite/
 │   ├── app.js                # Open instant detection, canvas overlay & webcam engine
 │   ├── package.json          # Vite scripts & dependencies
 │   ├── vite.config.js        # Vite local development server config (port 3000)
-│   └── dist/                 # Production-built bundle for Vercel Edge CDN
+│   ├── .env.example          # Vite environment variable template
+│   └── dist/                 # Production-built bundle for Vercel Edge CDN (gitignored)
 ├── mobile-app/               # Cross-Platform Mobile Client (React Native + Expo)
 │   ├── App.js                # Instant Camera/Gallery Vision Studio (No login barrier)
 │   ├── config.js             # API endpoints configuration (points to live Vercel)
 │   ├── app.json              # Expo application manifest & standalone APK package
 │   ├── eas.json              # EAS Build configuration for Android preview APK
 │   └── package.json          # React Native and Expo dependencies
+├── build_exact_docx.py       # Rebuilds formal DOCX reports from target_verbatim_text.txt
+├── generate_report_md.py     # Rebuilds REPORT.md from target_verbatim_text.txt
+├── generate_fig8.py          # Generates Figure 8 architecture diagram
+├── verify_docx.py            # Verifies DOCX structure, tables, images, and verbatim phrases
+├── target_verbatim_text.txt  # Verbatim canonical source text for report generators
 ├── smoke_test_production.py  # Automated production verification test suite (5/5 passes)
 ├── vercel.json               # Vercel deployment routing (FastAPI + Vite static)
 ├── REPORT.md                 # Complete formal evaluation & deployment report (Chapters 1-9)
