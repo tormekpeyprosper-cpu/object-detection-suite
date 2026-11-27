@@ -19,7 +19,7 @@ key_phrases = [
     "CUSTOM OBJECT DETECTION AND RECOGNITION OF MYSELF USING ULTRALYTICS YOLO",
     "Candidate Name: Tormekpey Ian Prosper",
     "Student ID: PUIS/23210047",
-    "Most object detection models are built to recognize general objects.",
+    "Out-of-the-box object detectors are trained on generic object classes.",
     "91.7% precision, 80.0% recall, 80.4% mAP@50, and 34.9% mAP@50-95",
     "NVIDIA RTX PRO 6000 Blackwell Server Edition (97,252 MiB VRAM)",
     "https://predict-6b01cbfb6aa91a04b3325654-dproatj77a-no.a.run.app",
