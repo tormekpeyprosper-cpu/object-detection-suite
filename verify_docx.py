@@ -19,15 +19,15 @@ key_phrases = [
     "CUSTOM OBJECT DETECTION AND RECOGNITION OF MYSELF USING ULTRALYTICS YOLO",
     "Candidate Name: Tormekpey Ian Prosper",
     "Student ID: PUIS/23210047",
-    "Out-of-the-box object detectors are trained on generic object classes.",
-    "91.7% precision, 80.0% recall, 80.4% mAP@50, and 34.9% mAP@50-95",
+    "Ready-made detectors only know broad groups.",
+    "91.7% precision, 80.0% recall, 80.4% mAP@50 and 34.9% mAP@50-95",
     "NVIDIA RTX PRO 6000 Blackwell Server Edition (97,252 MiB VRAM)",
     "https://predict-6b01cbfb6aa91a04b3325654-dproatj77a-no.a.run.app",
     "https://object-detection-suite.vercel.app",
     "https://expo.dev/accounts/inkedme/projects/vision-detect-mobile",
     "https://drive.google.com/drive/folders/1ARy1CuAKU0G6YdFLEGivOJGJ0VmC_hNm?usp=sharing",
     "Figure 8: Decoupled Zero-Storage Client-Server Architecture",
-    "I hereby declare that this project report entitled 'Custom Object Detection and Recognition of Myself Using Ultralytics YOLO'"
+    "In addition, I declare that this document, titled 'Custom Object Detection and Recognition of Myself Using Ultralytics YOLO'"
 ]
 
 docx_full_text = " ".join([p.text for p in doc.paragraphs])
